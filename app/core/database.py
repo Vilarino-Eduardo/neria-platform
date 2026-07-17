@@ -15,12 +15,26 @@ class Database:
 
         self.connection = sqlite3.connect(
             DATABASE_FILE,
-            check_same_thread=False
+            check_same_thread=False,
+            timeout=30
         )
 
         self.connection.row_factory = sqlite3.Row
 
+        self.enable_foreign_keys()
+
         self.create_tables()
+
+
+    def enable_foreign_keys(self):
+
+        cursor = self.connection.cursor()
+
+        cursor.execute(
+            "PRAGMA foreign_keys = ON;"
+        )
+
+        self.connection.commit()
 
 
     def create_tables(self):
@@ -232,6 +246,14 @@ class Database:
     def get_connection(self):
 
         return self.connection
+
+
+    def close(self):
+
+        if self.connection:
+
+            self.connection.close()
+
 
 
 database = Database()
