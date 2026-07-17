@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Capa para Smartphone",
+        "price": "R$ 80,00",
+        "availability": "Em estoque"
+    },
+    {
+        "name": "Carregador Turbo",
+        "price": "R$ 150,00",
+        "availability": "Em estoque"
+    },
+    {
+        "name": "Película de Proteção",
+        "price": "R$ 50,00",
+        "availability": "Em estoque"
+    }
+]

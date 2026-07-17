@@ -1,0 +1,157 @@
+[
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo. Como posso ajudar?"
+    },
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo. Como posso ajudar?"
+    },
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "user": "3",
+        "bot": "Um atendente será chamado.\nAguarde alguns instantes."
+    },
+    {
+        "phone": "demo-user",
+        "user": "2",
+        "bot": "Para consultar preços, informe qual produto ou serviço deseja."
+    },
+    {
+        "phone": "demo-user",
+        "user": "1",
+        "bot": "Temos diversos produtos disponíveis.\nInforme qual categoria deseja consultar."
+    },
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "user": "1",
+        "bot": "Temos diversos produtos disponíveis.\nInforme qual categoria deseja consultar."
+    },
+    {
+        "phone": "demo-user",
+        "user": "1",
+        "bot": "Temos diversos produtos disponíveis.\nInforme qual categoria deseja consultar."
+    },
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "user": "1",
+        "bot": "Temos diversos produtos disponíveis.\nInforme qual categoria deseja consultar."
+    },
+    {
+        "phone": "demo-user",
+        "user": "2",
+        "bot": "Para consultar preços, informe qual produto ou serviço deseja."
+    },
+    {
+        "phone": "demo-user",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 17:51:00",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:00:44",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Conhecer produtos\n2 - Consultar preços\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:16:57",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Consultar produtos\n2 - Nossas lojas\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:17:09",
+        "user": "1",
+        "bot": "Escolha uma categoria:\n\n1 - Eletrônicos\n2 - Informática\n3 - Acessórios"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:27:41",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Consultar produtos\n2 - Nossas lojas\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:27:43",
+        "user": "1",
+        "bot": "Escolha uma categoria:\n\n1 - Eletrônicos\n2 - Informática\n3 - Acessórios"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:27:46",
+        "user": "1",
+        "bot": "Produtos disponíveis:\n\nSmart TV 50 polegadas\nPreço: R$ 2.499,00\nStatus: Em estoque\n\nFone Bluetooth Premium\nPreço: R$ 299,00\nStatus: Em estoque\n\nCaixa de Som Portátil\nPreço: R$ 450,00\nStatus: Poucas unidades\n\n"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:29:38",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Consultar produtos\n2 - Nossas lojas\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:29:40",
+        "user": "2",
+        "bot": "Nossas lojas:\n\nLoja Centro\n📍 Rua Principal, 123\n📞 (54) 99999-1111\n⏰ Segunda a sábado: 09h às 18h\n\nLoja Shopping\n📍 Avenida Central, 500\n📞 (54) 98888-2222\n⏰ Segunda a domingo: 10h às 22h"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:29:44",
+        "user": "3",
+        "bot": "Atendimento aberto!\n\nSeu protocolo é #67774.\n\nUm de nossos atendentes entrará em contato em breve."
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:34:18",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Consultar produtos\n2 - Nossas lojas\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:34:20",
+        "user": "1",
+        "bot": "Escolha uma categoria:\n\n1 - Eletrônicos\n2 - Informática\n3 - Acessórios"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:34:23",
+        "user": "3",
+        "bot": "Produtos disponíveis:\n\nCapa para Smartphone\nPreço: R$ 80,00\nStatus: Em estoque\n\nCarregador Turbo\nPreço: R$ 150,00\nStatus: Em estoque\n\nPelícula de Proteção\nPreço: R$ 50,00\nStatus: Em estoque\n\n"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:35:05",
+        "user": "oi",
+        "bot": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:\n\n1 - Consultar produtos\n2 - Nossas lojas\n3 - Falar com atendente"
+    },
+    {
+        "phone": "demo-user",
+        "timestamp": "2026-07-16 18:35:06",
+        "user": "1",
+        "bot": "Escolha uma categoria:\n\n1 - Eletrônicos\n2 - Informática\n3 - Acessórios"
+    }
+]
