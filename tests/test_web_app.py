@@ -22,3 +22,5 @@ def test_web_application_is_served() -> None:
     assert "registerOrganization" in javascript.text
     assert "E-mail ou senha inválidos." in javascript.text
     assert "Código de suporte" in javascript.text
+    assert "displayConversation" in javascript.text
+    assert "conversation.status!=='closed'" in javascript.text
