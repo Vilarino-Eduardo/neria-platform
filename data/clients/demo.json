@@ -1,9 +1,0 @@
-{
-    "company": "Empresa Demo",
-    "welcome": "Olá! Seja bem-vindo à Empresa Demo.\n\nEscolha uma opção:",
-    "menu": {
-        "1": "Conhecer produtos",
-        "2": "Consultar preços",
-        "3": "Falar com atendente"
-    }
-}

@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Neria — Atendimento</title>
+  <link rel="icon" type="image/png" href="/static/brand/neria-symbol-concept.png">
+  <link rel="stylesheet" href="/static/app.css?v=20260831-2">
+</head>
+<body>
+  <main id="login-view" class="login-shell">
+    <section class="login-card">
+      <div class="brand brand-large"><img class="brand-symbol" src="/static/brand/neria-symbol-concept.png" alt=""><span>Neria</span></div>
+      <div id="login-copy"><p class="eyebrow">ATENDIMENTO INTELIGENTE</p><h1>Seu WhatsApp organizado em um só lugar.</h1><p class="muted">Entre para acompanhar conversas, assumir atendimentos e responder clientes.</p></div>
+      <form id="login-form">
+        <label>E-mail<input id="email" type="email" autocomplete="email" required></label>
+        <label>Senha<input id="password" type="password" autocomplete="current-password" required></label>
+        <p id="login-error" class="error" role="alert"></p>
+        <button class="primary full" type="submit">Entrar</button>
+        <button id="forgot-password" class="text-button" type="button">Esqueci minha senha</button>
+        <button id="open-registration" class="text-button auth-divider" type="button">Criar uma empresa na Neria</button>
+      </form>
+      <form id="registration-form" class="hidden">
+        <div><p class="eyebrow">COMEÇAR AGORA</p><h1>Crie sua empresa</h1><p class="muted">Você será o administrador e poderá adicionar até dois colaboradores.</p></div>
+        <label>Nome da empresa<input id="registration-company" minlength="2" maxlength="160" autocomplete="organization" required></label>
+        <label>Seu nome<input id="registration-name" minlength="2" maxlength="160" autocomplete="name" required></label>
+        <label>E-mail profissional<input id="registration-email" type="email" maxlength="320" autocomplete="email" required></label>
+        <label>Senha<input id="registration-password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required><small>Use pelo menos oito caracteres.</small></label>
+        <p id="registration-error" class="error" role="alert"></p>
+        <button class="primary full" type="submit">Criar empresa</button>
+        <button class="text-button back-to-login" type="button">Já tenho uma conta</button>
+      </form>
+      <form id="forgot-form" class="hidden">
+        <div><p class="eyebrow">RECUPERAR ACESSO</p><h1>Esqueceu sua senha?</h1><p class="muted">Informe seu e-mail para receber as instruções.</p></div>
+        <label>E-mail<input id="forgot-email" type="email" autocomplete="email" required></label>
+        <p id="forgot-message" class="form-message" role="status"></p>
+        <button class="primary full" type="submit">Enviar instruções</button><button class="text-button back-to-login" type="button">Voltar para entrar</button>
+      </form>
+      <form id="reset-form" class="hidden">
+        <div><p class="eyebrow">NOVA SENHA</p><h1>Crie uma nova senha</h1><p class="muted">Use pelo menos oito caracteres.</p></div>
+        <label>Nova senha<input id="reset-password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+        <label>Confirmar senha<input id="reset-password-confirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+        <p id="reset-message" class="form-message" role="status"></p>
+        <button class="primary full" type="submit">Redefinir senha</button><button class="text-button back-to-login" type="button">Voltar para entrar</button>
+      </form>
+    </section>
+  </main>
+
+  <main id="app-view" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="brand"><img class="brand-symbol" src="/static/brand/neria-symbol-concept.png" alt=""><span>Neria</span></div>
+      <nav>
+        <button id="nav-inbox" class="nav-item active"><span>◫</span>Atendimentos <b id="notification-badge" class="notification-badge hidden">0</b></button>
+        <button id="nav-dashboard" class="nav-item"><span>▥</span>Visão geral</button>
+        <button id="nav-onboarding" class="nav-item"><span>✓</span>Primeiros passos</button>
+        <button id="nav-contacts" class="nav-item"><span>◎</span>Contatos</button>
+        <button id="nav-automations" class="nav-item"><span>⌁</span>Automações</button>
+        <button id="nav-knowledge" class="nav-item"><span>≋</span>Conhecimento</button>
+        <button id="nav-ai" class="nav-item"><span>✦</span>Inteligência</button>
+        <button id="nav-whatsapp" class="nav-item"><span>◉</span>WhatsApp</button>
+        <button id="nav-settings" class="nav-item"><span>⚙</span>Configurações</button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="avatar" id="user-avatar">U</div>
+        <div><strong id="user-name">Usuário</strong><small id="user-role"></small></div>
+        <button id="logout" class="icon-button" title="Sair">↪</button>
+      </div>
+    </aside>
+
+    <section class="inbox-panel">
+      <header class="panel-header">
+        <div><p class="eyebrow">CAIXA DE ENTRADA</p><h2>Atendimentos</h2></div>
+        <button id="refresh" class="icon-button" title="Atualizar">↻</button>
+      </header>
+      <div class="search-wrap"><input id="search" type="search" placeholder="Buscar cliente ou telefone"></div>
+      <div class="filters" id="filters">
+        <button data-filter="all" class="active">Todos</button>
+        <button data-filter="human">Humano</button>
+        <button data-filter="bot">Bot</button>
+      </div>
+      <div class="queue-filters"><select id="assignment-filter" aria-label="Filtrar por responsável"><option value="">Toda a equipe</option><option value="mine">Meus atendimentos</option><option value="unassigned">Sem responsável</option></select><select id="priority-filter" aria-label="Filtrar por prioridade"><option value="">Todas as prioridades</option><option value="urgent">Urgente</option><option value="high">Alta</option><option value="normal">Normal</option><option value="low">Baixa</option></select><select id="tag-filter" aria-label="Filtrar por etiqueta"><option value="">Todas as etiquetas</option></select></div>
+      <div id="conversation-list" class="conversation-list"></div>
+    </section>
+
+    <section class="chat-panel">
+      <div id="empty-chat" class="empty-state">
+        <div class="empty-icon">✦</div><h2>Selecione uma conversa</h2>
+        <p>Escolha um atendimento ao lado para visualizar o histórico.</p>
+      </div>
+      <div id="active-chat" class="active-chat hidden">
+        <header class="chat-header">
+          <button id="back" class="icon-button mobile-only">←</button>
+          <div class="avatar" id="contact-avatar">C</div>
+          <div class="contact-heading"><strong id="contact-name"></strong><small id="contact-phone"></small></div>
+          <div class="conversation-tags"><div id="conversation-tags-list" class="tag-chips"></div><select id="conversation-tag-picker" title="Adicionar etiqueta"><option value="">+ Etiqueta</option></select></div>
+          <div class="chat-actions">
+            <select id="conversation-priority" title="Prioridade"><option value="low">Baixa</option><option value="normal">Normal</option><option value="high">Alta</option><option value="urgent">Urgente</option></select>
+            <select id="assignee" title="Responsável"><option value="">Sem responsável</option></select>
+            <button id="toggle-timeline" class="secondary" type="button">Notas</button>
+            <button id="toggle-mode" class="secondary"></button>
+            <button id="close-conversation" class="icon-button danger" title="Encerrar">✓</button>
+          </div>
+        </header>
+        <aside id="conversation-timeline" class="conversation-timeline hidden"><div class="timeline-heading"><div><strong>Histórico interno</strong><small>Visível apenas para a equipe</small></div><button id="close-timeline" class="icon-button" type="button">×</button></div><form id="note-form"><textarea id="note-content" rows="3" maxlength="5000" required placeholder="Escreva uma nota interna…"></textarea><button class="primary" type="submit">Adicionar nota</button></form><div id="timeline-list" class="timeline-list"></div></aside>
+        <div id="messages" class="messages"></div>
+        <div id="window-warning" class="window-warning hidden">Janela de 24 horas encerrada. Use um template aprovado.</div>
+        <form id="composer" class="composer">
+          <div class="quick-reply-picker"><button id="quick-replies-toggle" class="icon-button" type="button" title="Respostas rápidas">⚡</button><div id="quick-replies-menu" class="quick-replies-menu hidden"></div></div>
+          <textarea id="message-input" rows="1" maxlength="10000" placeholder="Digite uma mensagem…"></textarea>
+          <button class="send-button" type="submit" title="Enviar">➤</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="contacts-view" class="contacts-workspace hidden">
+      <header class="automation-header"><div><p class="eyebrow">RELACIONAMENTO</p><h2>Contatos</h2><p>Consulte clientes, histórico e permissões de atendimento.</p></div><button id="new-contact" class="primary" type="button">Novo contato</button></header>
+      <div class="contacts-layout">
+        <aside class="contacts-list-panel"><div class="contacts-search"><input id="contacts-search" type="search" placeholder="Buscar nome ou telefone"></div><div id="contacts-list" class="contacts-list"></div></aside>
+        <section id="contact-empty" class="automation-empty"><div class="empty-icon">◎</div><h2>Selecione um contato</h2><p>Veja dados e conversas anteriores.</p></section>
+        <section id="contact-detail" class="contact-detail hidden"><div class="detail-heading"><div><p class="eyebrow">CONTATO</p><h2 id="contact-detail-name"></h2><p id="contact-detail-phone"></p></div><div class="contact-privacy-actions"><button id="export-contact-data" class="secondary" type="button">Exportar dados</button><button id="anonymize-contact" class="secondary danger" type="button">Anonimizar</button><button id="toggle-contact-block" class="secondary danger" type="button"></button></div></div><form id="contact-edit-form"><label>Nome de identificação<input id="contact-edit-name" maxlength="160"></label><button class="secondary" type="submit">Salvar nome</button></form><h3>Histórico de conversas</h3><div id="contact-history" class="contact-history"></div></section>
+        <form id="contact-create-form" class="contact-form hidden"><p class="eyebrow">NOVO CONTATO</p><h2>Cadastrar contato</h2><label>Nome<input id="contact-create-name" maxlength="160"></label><label>Telefone com DDI e DDD<input id="contact-create-phone" required minlength="8" maxlength="32" placeholder="5511999999999"></label><div class="editor-actions"><button id="cancel-contact" class="secondary" type="button">Cancelar</button><div class="spacer"></div><button class="primary" type="submit">Cadastrar</button></div></form>
+      </div>
+    </section>
+
+    <section id="dashboard-view" class="dashboard-workspace hidden">
+      <header class="automation-header"><div><p class="eyebrow">OPERAÇÃO</p><h2>Visão geral</h2><p>Acompanhe o atendimento e identifique rapidamente o que precisa de atenção.</p></div><div class="dashboard-export-actions"><button class="secondary" type="button" data-export="contacts">Exportar contatos</button><button class="secondary" type="button" data-export="conversations">Exportar conversas</button><button class="secondary" type="button" data-export="team-performance">Exportar equipe</button><button id="refresh-dashboard" class="secondary" type="button">Atualizar</button></div></header>
+      <div class="dashboard-content">
+        <section class="dashboard-metrics">
+          <article><small>CONVERSAS ABERTAS</small><strong id="dash-open">0</strong><span>em atendimento</span></article>
+          <article class="attention"><small>AGUARDANDO HUMANO</small><strong id="dash-human">0</strong><span>na fila da equipe</span></article>
+          <article><small>MENSAGENS HOJE</small><strong id="dash-messages">0</strong><span>recebidas e enviadas</span></article>
+          <article><small>TEMPO DE RESPOSTA</small><strong id="dash-response">—</strong><span>média dos últimos 30 dias</span></article>
+          <article class="danger-metric"><small>SLA ATRASADO</small><strong id="dash-sla-overdue">0</strong><span>aguardando resposta</span></article>
+        </section>
+        <section class="dashboard-grid">
+          <article class="dashboard-card"><div class="dashboard-card-heading"><div><h3>Volume de mensagens</h3><p>Últimos sete dias</p></div><div class="chart-legend"><span><i class="inbound"></i>Recebidas</span><span><i class="outbound"></i>Enviadas</span></div></div><div id="volume-chart" class="volume-chart"></div></article>
+          <article class="dashboard-card summary-card"><h3>Resumo do período</h3><div><span>Clientes ativos</span><strong id="dash-contacts">0</strong></div><div><span>Conversas encerradas</span><strong id="dash-closed">0</strong></div><button class="secondary" type="button" data-dashboard-section="inbox">Abrir atendimentos</button></article>
+        </section>
+        <section class="dashboard-card team-performance-card"><div class="dashboard-card-heading"><div><h3>Desempenho da equipe</h3><p>Indicadores dos últimos 30 dias</p></div></div><div class="team-performance-table"><div class="team-performance-row team-performance-head"><span>Atendente</span><span>Em aberto</span><span>Encerradas</span><span>Mensagens</span><span>Resposta média</span></div><div id="team-performance-list"></div></div></section>
+      </div>
+    </section>
+
+    <section id="onboarding-view" class="onboarding-workspace hidden">
+      <div class="onboarding-content">
+        <div class="onboarding-hero"><div><p class="eyebrow">BEM-VINDO À NERIA</p><h1>Vamos preparar seu atendimento.</h1><p>Conclua as etapas essenciais para receber clientes com segurança.</p></div><button id="leave-onboarding" class="secondary" type="button">Ir para atendimentos</button></div>
+        <section class="onboarding-progress"><div><strong id="onboarding-percent">0%</strong><span id="onboarding-count">0 de 4 etapas</span></div><div class="progress-track"><span id="onboarding-bar"></span></div></section>
+        <div id="onboarding-steps" class="onboarding-steps"></div>
+        <aside class="onboarding-note"><span>✦</span><div><strong>A inteligência pode ser preparada sem custos agora</strong><p>Configure comportamento e teste a busca de conhecimento. Os créditos da OpenAI só serão necessários na validação real.</p></div></aside>
+      </div>
+    </section>
+
+    <section id="automation-view" class="automation-workspace hidden">
+      <header class="automation-header">
+        <div><p class="eyebrow">CONFIGURAÇÃO</p><h2>Menus e automações</h2><p>Crie respostas automáticas sem alterar código.</p></div>
+        <button id="new-automation" class="primary">Nova automação</button>
+      </header>
+      <div class="automation-layout">
+        <aside class="automation-list-panel">
+          <div id="automation-list" class="automation-list"></div>
+        </aside>
+        <section id="automation-empty" class="automation-empty"><div class="empty-icon">⌁</div><h2>Selecione uma automação</h2><p>Ou crie um novo menu para começar.</p></section>
+        <form id="automation-form" class="automation-editor hidden">
+          <div class="editor-heading"><div><p class="eyebrow">EDITOR SIMPLES</p><h2 id="automation-title">Nova automação</h2></div><span id="automation-status" class="status-pill">Rascunho</span></div>
+          <div class="form-grid">
+            <label>Nome<input id="automation-name" required maxlength="160" placeholder="Ex.: Menu principal"></label>
+            <label>Palavras-chave<input id="automation-keywords" maxlength="500" placeholder="menu, olá, início"></label>
+          </div>
+          <label class="check-label"><input id="automation-fallback" type="checkbox"> Usar como fluxo padrão quando nenhuma palavra-chave corresponder</label>
+          <div class="flow-card start-card"><span class="flow-step">1</span><div><strong>Mensagem do menu</strong><small>Esta será a primeira resposta enviada ao cliente.</small></div></div>
+          <textarea id="menu-text" rows="3" required maxlength="1024" placeholder="Olá! Como podemos ajudar?"></textarea>
+          <div class="flow-connector"></div>
+          <div class="options-heading"><div><span class="flow-step">2</span><strong>Opções do cliente</strong></div><button id="add-option" class="secondary" type="button">+ Adicionar opção</button></div>
+          <div id="automation-options" class="automation-options"></div>
+          <div class="editor-actions"><button id="deactivate-automation" type="button" class="secondary danger hidden">Desativar</button><div class="spacer"></div><button type="submit" class="secondary">Salvar rascunho</button><button id="activate-automation" type="button" class="primary">Salvar e ativar</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="knowledge-view" class="knowledge-workspace hidden">
+      <header class="automation-header">
+        <div><p class="eyebrow">CONTEÚDO DA EMPRESA</p><h2>Base de conhecimento</h2><p>Informações que serão utilizadas pela inteligência da Neria.</p></div>
+        <div class="header-actions"><button id="new-manual-source" class="secondary">Adicionar texto</button><button id="new-file-source" class="primary">Enviar arquivo</button></div>
+      </header>
+      <div class="knowledge-layout">
+        <aside class="knowledge-list-panel"><div id="knowledge-list" class="knowledge-list"></div></aside>
+        <section id="knowledge-empty" class="automation-empty"><div class="empty-icon">≋</div><h2>Sua base está vazia</h2><p>Adicione informações ou envie um documento.</p></section>
+        <section id="knowledge-detail" class="knowledge-detail hidden">
+          <div class="detail-heading"><div><p class="eyebrow">FONTE PROCESSADA</p><h2 id="knowledge-title"></h2><p id="knowledge-meta"></p></div><button id="delete-source" class="secondary danger">Excluir</button></div>
+          <div class="knowledge-summary"><div><strong id="knowledge-characters">0</strong><small>caracteres</small></div><div><strong id="knowledge-chunks">0</strong><small>trechos para consulta</small></div><div><strong id="knowledge-type">—</strong><small>tipo de fonte</small></div></div>
+          <h3>Conteúdo processado</h3><div id="knowledge-content" class="knowledge-content"></div>
+        </section>
+        <form id="manual-source-form" class="knowledge-form hidden">
+          <p class="eyebrow">NOVA FONTE</p><h2>Adicionar informação manual</h2>
+          <label>Título<input id="manual-title" required minlength="2" maxlength="200" placeholder="Ex.: Política de trocas"></label>
+          <label>Conteúdo<textarea id="manual-content" required minlength="20" maxlength="2000000" rows="12" placeholder="Descreva a informação de forma clara e completa."></textarea></label>
+          <div class="editor-actions"><button type="button" class="secondary cancel-knowledge">Cancelar</button><div class="spacer"></div><button type="submit" class="primary">Salvar e processar</button></div>
+        </form>
+        <form id="file-source-form" class="knowledge-form hidden">
+          <p class="eyebrow">NOVA FONTE</p><h2>Enviar documento</h2>
+          <label>Título opcional<input id="file-title" maxlength="200" placeholder="Usaremos o nome do arquivo se ficar vazio"></label>
+          <label class="upload-zone" for="knowledge-file"><span class="upload-icon">⇧</span><strong>Selecione um documento</strong><span id="selected-file">TXT, PDF ou DOCX · máximo de 10 MB</span><input id="knowledge-file" type="file" accept=".txt,.pdf,.docx" required></label>
+          <div class="editor-actions"><button type="button" class="secondary cancel-knowledge">Cancelar</button><div class="spacer"></div><button type="submit" class="primary">Enviar e processar</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="ai-view" class="ai-workspace hidden">
+      <header class="automation-header">
+        <div><p class="eyebrow">INTELIGÊNCIA ARTIFICIAL</p><h2>Comportamento da Neria</h2><p>Defina como a IA responde e quando transfere para uma pessoa.</p></div>
+      </header>
+      <form id="ai-form" class="ai-form">
+        <section class="ai-metrics">
+          <div><small>RESPOSTAS DA IA</small><strong id="metric-total">0</strong><span>últimos 30 dias</span></div>
+          <div><small>CONFIANÇA MÉDIA</small><strong id="metric-confidence">—</strong><span>nas respostas avaliadas</span></div>
+          <div><small>TRANSFERÊNCIAS</small><strong id="metric-handoff">0%</strong><span id="metric-handoff-count">0 atendimentos</span></div>
+          <div><small>CORREÇÕES</small><strong id="metric-corrections">0</strong><span>enviadas pela equipe</span></div>
+          <div id="metric-quota-card"><small>COTA RESTANTE</small><strong id="metric-quota-remaining">0</strong><span id="metric-quota-usage">0 de 0 utilizadas hoje</span></div>
+        </section>
+        <section class="ai-usage-card">
+          <div class="ai-usage-heading"><div><p class="eyebrow">CONSUMO</p><h3>Uso nos últimos 30 dias</h3></div><div><strong id="metric-period-tokens">0</strong><span> tokens no período</span></div></div>
+          <div id="ai-usage-chart" class="ai-usage-chart" role="img" aria-label="Histórico diário de tokens da IA"></div>
+          <div class="ai-usage-legend"><span><i></i>Tokens processados</span><span id="metric-period-requests">0 chamadas pagas</span></div>
+        </section>
+        <div class="ai-status-card">
+          <div><strong>Respostas com IA</strong><p>A ativação real ficará desligada enquanto testamos sem consumir créditos.</p></div>
+          <label class="switch"><input id="ai-enabled" type="checkbox"><span></span></label>
+        </div>
+        <div class="form-grid">
+          <label>Tom de voz<input id="ai-tone" required minlength="2" maxlength="40" placeholder="Ex.: profissional e acolhedor"></label>
+          <label>Confiança mínima (%)<input id="ai-confidence" type="number" min="0" max="100" required></label>
+          <label>Mensagens anteriores consideradas<input id="ai-history-limit" type="number" min="4" max="30" required></label>
+          <label>Trechos da base consultados<input id="ai-retrieval-limit" type="number" min="1" max="10" required></label>
+        </div>
+        <label>Instruções para a IA<textarea id="ai-instructions" maxlength="5000" rows="8" placeholder="Ex.: Responda de forma objetiva. Nunca invente preços ou prazos."></textarea></label>
+        <label>Mensagem de transferência<textarea id="ai-fallback" required minlength="10" maxlength="1000" rows="3" placeholder="Mensagem enviada quando a IA não tiver segurança para responder."></textarea></label>
+        <div class="editor-actions"><p class="ai-help">As alterações ficam prontas para uso futuro mesmo com a IA desativada.</p><div class="spacer"></div><button class="primary" type="submit">Salvar configurações</button></div>
+        <section class="simulation-card">
+          <p class="eyebrow">TESTE SEM CRÉDITOS</p><h3>Simular uma pergunta</h3><p>Valide se a Neria encontra a informação correta na base de conhecimento.</p>
+          <div class="simulation-input"><input id="simulation-question" maxlength="2000" placeholder="Ex.: Qual é o prazo para troca?"><button id="run-simulation" class="secondary" type="button">Simular resposta</button></div>
+          <div id="simulation-result" class="simulation-result hidden"></div>
+        </section>
+        <section class="learning-card">
+          <div class="learning-heading"><div><p class="eyebrow">APRENDIZADO SUPERVISIONADO</p><h3>Correções para revisar</h3><p>A Neria só aprende uma correção depois da aprovação de um administrador.</p></div><button id="refresh-suggestions" class="secondary" type="button">Atualizar</button></div>
+          <div id="suggestions-list" class="suggestions-list"><div class="list-empty">Carregando correções…</div></div>
+        </section>
+      </form>
+    </section>
+    <section id="whatsapp-view" class="settings-workspace hidden">
+      <header class="automation-header">
+        <div><p class="eyebrow">CANAL DE ATENDIMENTO</p><h2>WhatsApp Business</h2><p>Conecte e acompanhe o número utilizado pela empresa.</p></div>
+      </header>
+      <div class="whatsapp-content">
+        <section id="whatsapp-empty" class="connection-card hidden">
+          <div class="connection-intro"><div class="empty-icon">◉</div><div><h3>Conectar um número</h3><p>Use os dados fornecidos no painel de desenvolvedores da Meta.</p></div></div>
+          <form id="whatsapp-form">
+            <div class="form-grid">
+              <label>Nome da conta<input id="wa-display-name" required minlength="2" maxlength="160" placeholder="Ex.: WhatsApp principal"></label>
+              <label>Número com DDI e DDD<input id="wa-phone" required minlength="8" maxlength="32" placeholder="5511999999999"></label>
+              <label>ID do número na Meta<input id="wa-phone-id" required minlength="2" maxlength="64"></label>
+              <label>ID da conta comercial<input id="wa-business-id" required minlength="2" maxlength="64"></label>
+            </div>
+            <label>Token de acesso<input id="wa-access-token" type="password" required minlength="20" maxlength="2000" autocomplete="off"><small>O token será criptografado antes de ser armazenado e não voltará a ser exibido.</small></label>
+            <div class="editor-actions"><div class="spacer"></div><button class="primary" type="submit">Salvar conexão</button></div>
+          </form>
+        </section>
+        <section id="whatsapp-connected" class="hidden">
+          <div class="connection-card account-overview"><div><p class="eyebrow">CONTA PRINCIPAL</p><h3 id="wa-account-name"></h3><p id="wa-account-phone"></p></div><span id="wa-account-status" class="status-pill"></span></div>
+          <div class="connection-grid">
+            <section class="connection-card"><h3>Dados da Meta</h3><dl><div><dt>ID do número</dt><dd id="wa-account-phone-id"></dd></div><div><dt>ID da conta comercial</dt><dd id="wa-account-business-id"></dd></div></dl><button id="verify-whatsapp" class="primary" type="button">Validar credenciais</button></section>
+            <section class="connection-card"><div class="template-heading"><div><h3>Templates</h3><p>Mensagens aprovadas para uso fora da janela de 24 horas.</p></div><button id="sync-templates" class="secondary" type="button">Sincronizar</button></div><div id="template-list" class="template-list"></div></section>
+          </div>
+          <section class="connection-card webhook-card"><h3>Webhook da plataforma</h3><p>URL que receberá mensagens e atualizações da Meta. Em produção ela deverá usar o domínio público da Neria.</p><code id="webhook-url"></code></section>
+        </section>
+      </div>
+    </section>
+    <section id="settings-view" class="settings-workspace hidden">
+      <header class="automation-header">
+        <div><p class="eyebrow">ADMINISTRAÇÃO</p><h2>Empresa e equipe</h2><p>Mantenha os dados de atendimento e os acessos da organização.</p></div>
+      </header>
+      <div class="settings-content">
+        <section class="settings-card subscription-card">
+          <div><p class="eyebrow">PLANO COMERCIAL</p><h3>Neria Inicial</h3><p id="subscription-description">Carregando assinatura…</p></div><div class="subscription-status"><span id="subscription-status" class="status-pill"></span><strong id="subscription-date"></strong><small>Até 3 usuários · 1 número de WhatsApp</small></div>
+        </section>
+        <form id="company-form" class="settings-card">
+          <div class="settings-heading"><div><h3>Dados da empresa</h3><p>Estas informações também ajudam a contextualizar as respostas da Neria.</p></div><button class="primary" type="submit">Salvar empresa</button></div>
+          <div class="form-grid">
+            <label>Nome da empresa<input id="company-name" required minlength="2" maxlength="160"></label>
+            <label>E-mail de contato<input id="company-email" type="email" maxlength="320"></label>
+            <label>Telefone<input id="company-phone" maxlength="32"></label>
+            <label>Endereço<input id="company-address" maxlength="500"></label>
+            <label>Meta de primeira resposta (minutos)<input id="company-sla" type="number" required min="1" max="1440" value="15"></label>
+            <label>Retenção de dados (dias)<input id="company-retention" type="number" required min="30" max="3650" value="365"></label>
+            <label class="checkbox-line"><input id="company-auto-assignment" type="checkbox">Distribuir novos atendimentos humanos automaticamente</label>
+          </div>
+          <label>Descrição<textarea id="company-description" maxlength="4000" rows="4"></textarea></label>
+          <label>Horários de atendimento<textarea id="company-hours" maxlength="500" rows="3" placeholder="Ex.: Segunda a sexta, das 8h às 18h"></textarea></label>
+          <label>Mensagem de boas-vindas<textarea id="company-welcome" required maxlength="2000" rows="3"></textarea></label>
+        </form>
+        <section class="settings-card privacy-card"><div class="settings-heading"><div><h3>Privacidade e retenção</h3><p>Conteúdos pessoais de conversas encerradas podem ser limpos após o prazo configurado.</p></div><button id="preview-retention" class="secondary" type="button">Verificar dados antigos</button></div><div id="retention-preview" class="privacy-preview">Clique em verificar para consultar o volume elegível.</div><button id="run-retention" class="secondary danger hidden" type="button">Executar limpeza</button></section>
+        <section class="settings-card">
+          <div class="settings-heading"><div><h3>Equipe</h3><p id="team-limit">0 de 3 acessos ativos</p></div><button id="new-user" class="primary" type="button">Adicionar usuário</button></div>
+          <form id="user-form" class="user-form hidden">
+            <div class="form-grid"><label>Nome<input id="new-user-name" required minlength="2" maxlength="160"></label><label>E-mail<input id="new-user-email" type="email" required maxlength="320"></label><label>Senha inicial<input id="new-user-password" type="password" required minlength="8" maxlength="128"></label><label>Perfil<select id="new-user-role"><option value="agent">Atendente</option><option value="admin">Administrador</option></select></label></div>
+            <div class="editor-actions"><button id="cancel-user" class="secondary" type="button">Cancelar</button><div class="spacer"></div><button class="primary" type="submit">Criar acesso</button></div>
+          </form>
+          <div id="team-list" class="team-list"></div>
+        </section>
+        <section class="settings-card">
+          <div class="settings-heading"><div><h3>Respostas rápidas</h3><p>Textos reutilizáveis para agilizar o atendimento humano.</p></div><button id="new-quick-reply" class="primary" type="button">Nova resposta</button></div>
+          <form id="quick-reply-form" class="user-form hidden"><div class="form-grid"><label>Título<input id="quick-reply-title" required minlength="2" maxlength="120" placeholder="Ex.: Horário de funcionamento"></label><label>Atalho<input id="quick-reply-shortcut" required maxlength="40" pattern="[a-z0-9_-]+" placeholder="horario"></label></div><label>Resposta<textarea id="quick-reply-content" required maxlength="5000" rows="4"></textarea></label><div class="editor-actions"><button id="cancel-quick-reply" class="secondary" type="button">Cancelar</button><div class="spacer"></div><button class="primary" type="submit">Salvar resposta</button></div></form>
+          <div id="quick-replies-admin-list" class="quick-replies-admin-list"></div>
+        </section>
+        <section class="settings-card">
+          <div class="settings-heading"><div><h3>Etiquetas</h3><p>Organize e filtre atendimentos por assunto, prioridade ou etapa.</p></div><button id="new-tag" class="primary" type="button">Nova etiqueta</button></div>
+          <form id="tag-form" class="user-form hidden"><div class="form-grid"><label>Nome<input id="tag-name" required minlength="1" maxlength="60" placeholder="Ex.: Orçamento"></label><label>Cor<input id="tag-color" type="color" value="#1677a8" required></label></div><div class="editor-actions"><button id="cancel-tag" class="secondary" type="button">Cancelar</button><div class="spacer"></div><button class="primary" type="submit">Criar etiqueta</button></div></form>
+          <div id="tags-admin-list" class="tags-admin-list"></div>
+        </section>
+        <section class="settings-card">
+          <div class="settings-heading"><div><h3>Histórico de segurança</h3><p>Ações administrativas e eventos de acesso mais recentes.</p></div><button id="refresh-audit" class="secondary" type="button">Atualizar</button></div>
+          <div id="audit-list" class="audit-list"><div class="list-empty">Carregando histórico…</div></div>
+        </section>
+      </div>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="/static/app.js?v=20260831-2" defer></script>
+</body>
+</html>
