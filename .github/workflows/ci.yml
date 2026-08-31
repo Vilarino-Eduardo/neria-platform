@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Quality and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: neria_test
+          POSTGRES_USER: neria
+          POSTGRES_PASSWORD: neria_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U neria -d neria_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      ENVIRONMENT: test
+      DEBUG: "false"
+      SECRET_KEY: ci-only-secret-key-with-at-least-32-characters
+      META_APP_SECRET: ci-only-meta-app-secret
+      META_WEBHOOK_VERIFY_TOKEN: ci-only-webhook-token
+      DATABASE_URL: postgresql+psycopg://neria:neria_test@localhost:5432/neria_test
+      REDIS_URL: redis://localhost:6379/0
+      OBJECT_STORAGE_BACKEND: local
+      OPENAI_API_KEY: ""
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+
+      - name: Install locked dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.lock
+
+      - name: Check dependency compatibility
+        run: python -m pip check
+
+      - name: Run static analysis
+        run: ruff check .
+
+      - name: Apply database migrations
+        run: alembic upgrade head
+
+      - name: Check model and migration consistency
+        run: alembic check
+
+      - name: Run test suite
+        run: pytest -q
