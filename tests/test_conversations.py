@@ -185,6 +185,28 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         assert unassigned_queue.status_code == 200
         assert unassigned_queue.json() == []
 
+        unassigned = client.patch(
+            f"/api/v1/conversations/{conversation_id}",
+            headers=headers,
+            json={"assigned_user_id": None},
+        )
+        assert unassigned.status_code == 200
+        assert unassigned.json()["assigned_user_id"] is None
+        unassigned_queue = client.get(
+            "/api/v1/conversations/inbox",
+            headers=headers,
+            params={"assignment": "unassigned"},
+        )
+        assert [item["id"] for item in unassigned_queue.json()] == [conversation_id]
+
+        reassigned = client.patch(
+            f"/api/v1/conversations/{conversation_id}",
+            headers=headers,
+            json={"assigned_user_id": current_user["id"]},
+        )
+        assert reassigned.status_code == 200
+        assert reassigned.json()["assigned_user_id"] == current_user["id"]
+
         note = client.post(
             f"/api/v1/conversations/{conversation_id}/notes",
             headers=headers,
@@ -381,6 +403,25 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         )
         assert closed.status_code == 200
         assert closed.json()["status"] == "closed"
+
+        closed_conversation = client.patch(
+            f"/api/v1/conversations/{conversation_id}",
+            headers=headers,
+            json={"status": "closed"},
+        )
+        assert closed_conversation.status_code == 200
+        assert closed_conversation.json()["status"] == "closed"
+
+        open_inbox = client.get("/api/v1/conversations/inbox", headers=headers)
+        assert open_inbox.status_code == 200
+        assert all(item["id"] != conversation_id for item in open_inbox.json())
+        closed_inbox = client.get(
+            "/api/v1/conversations/inbox",
+            headers=headers,
+            params={"conversation_status": "closed"},
+        )
+        assert closed_inbox.status_code == 200
+        assert [item["id"] for item in closed_inbox.json()] == [conversation_id]
 
         privacy_export = client.get(
             f"/api/v1/privacy/contacts/{contact.json()['id']}/export",

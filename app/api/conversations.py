@@ -99,8 +99,10 @@ def list_inbox(
         .outerjoin(latest_message, true())
         .where(Conversation.organization_id == current_user.organization_id)
     )
-    if conversation_status:
-        query = query.where(Conversation.status == conversation_status)
+    query = query.where(
+        Conversation.status
+        == (conversation_status or ConversationStatus.OPEN)
+    )
     if mode:
         query = query.where(Conversation.mode == mode)
     if tag_id:
@@ -278,7 +280,11 @@ def update_conversation(
     for field, value in changes.items():
         setattr(conversation, field, value)
 
-    assign_conversation_if_needed(session, conversation)
+    explicit_unassignment = (
+        "assigned_user_id" in changes and changes["assigned_user_id"] is None
+    )
+    if not explicit_unassignment:
+        assign_conversation_if_needed(session, conversation)
 
     if payload.status == ConversationStatus.CLOSED:
         conversation.closed_at = datetime.now(UTC)
