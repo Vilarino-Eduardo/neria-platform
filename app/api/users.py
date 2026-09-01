@@ -8,6 +8,7 @@ from app.core.security import hash_password
 from app.models.core import Organization, User, UserRole
 from app.schemas.auth import CreateUserRequest, UpdateUserRequest, UserResponse
 from app.services.audit import record_audit
+from app.services.database import integrity_conflict
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -54,17 +55,18 @@ def create_user(
         role=payload.role,
     )
     session.add(user)
-    session.flush()
-    record_audit(
-        session,
-        organization_id=current_user.organization_id,
-        actor_user_id=current_user.id,
-        action="user.created",
-        target_type="user",
-        target_id=str(user.id),
-        metadata={"role": user.role.value},
-    )
-    session.commit()
+    with integrity_conflict(session, "E-mail já cadastrado."):
+        session.flush()
+        record_audit(
+            session,
+            organization_id=current_user.organization_id,
+            actor_user_id=current_user.id,
+            action="user.created",
+            target_type="user",
+            target_id=str(user.id),
+            metadata={"role": user.role.value},
+        )
+        session.commit()
     session.refresh(user)
     return user
 

@@ -12,6 +12,7 @@ from app.schemas.conversation import (
     ConversationResponse,
 )
 from app.services.audit import record_audit
+from app.services.database import integrity_conflict
 
 router = APIRouter(prefix="/contacts", tags=["contacts"])
 
@@ -61,7 +62,8 @@ def create_contact(
 
     contact = Contact(organization_id=current_user.organization_id, **payload.model_dump())
     session.add(contact)
-    session.commit()
+    with integrity_conflict(session, "Contato já cadastrado."):
+        session.commit()
     session.refresh(contact)
     return contact
 
