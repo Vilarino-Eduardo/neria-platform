@@ -48,6 +48,7 @@ Se o Redis ficar indisponível, cada instância aplica temporariamente os limite
 Essa contingência reduz abuso durante falhas, mas não substitui o Redis no controle distribuído.
 A interface usa cookie de sessão `HttpOnly`, `SameSite=Lax` e `Secure` automaticamente em produção.
 Operações autenticadas por cookie também exigem um token CSRF correspondente no cabeçalho.
+Novas senhas exigem 12 a 128 caracteres e padrões comuns ou repetitivos são recusados localmente.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 

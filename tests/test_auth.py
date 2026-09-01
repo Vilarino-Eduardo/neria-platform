@@ -13,6 +13,28 @@ from app.models.core import Organization
 client = TestClient(app)
 
 
+def test_registration_rejects_common_and_repetitive_passwords() -> None:
+    suffix = uuid.uuid4().hex[:10]
+    base_payload = {
+        "organization_name": "Empresa senha",
+        "organization_slug": f"senha-{suffix}",
+        "admin_name": "Administrador",
+        "admin_email": f"senha-{suffix}@example.com",
+    }
+
+    common = client.post(
+        "/api/v1/auth/register",
+        json={**base_payload, "password": "123456789012"},
+    )
+    repetitive = client.post(
+        "/api/v1/auth/register",
+        json={**base_payload, "password": "aaaaaaaaaaaa"},
+    )
+
+    assert common.status_code == 422
+    assert repetitive.status_code == 422
+
+
 def test_client_ip_only_trusts_forwarding_from_configured_proxies() -> None:
     assert resolve_client_ip("198.51.100.8", "203.0.113.40", "10.0.0.0/8") == "198.51.100.8"
     assert resolve_client_ip("10.0.0.5", "203.0.113.40", "10.0.0.0/8") == "203.0.113.40"

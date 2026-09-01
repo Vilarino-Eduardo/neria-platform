@@ -23,6 +23,7 @@ def test_web_application_is_served() -> None:
     assert "neria_token" not in javascript.text
     assert "Authorization" not in javascript.text
     assert "X-CSRF-Token" in javascript.text
+    assert 'minlength="12"' in response.text
     assert "E-mail ou senha inválidos." in javascript.text
     assert "Código de suporte" in javascript.text
     assert "displayConversation" in javascript.text

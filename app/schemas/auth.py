@@ -1,8 +1,16 @@
 import uuid
+from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, field_validator
 
+from app.core.password_policy import validate_password_strength
 from app.models.core import UserRole
+
+StrongPassword = Annotated[
+    str,
+    Field(min_length=12, max_length=128),
+    AfterValidator(validate_password_strength),
+]
 
 
 class RegisterOrganizationRequest(BaseModel):
@@ -14,7 +22,7 @@ class RegisterOrganizationRequest(BaseModel):
     )
     admin_name: str = Field(min_length=2, max_length=160)
     admin_email: str = Field(min_length=5, max_length=320)
-    password: str = Field(min_length=8, max_length=128)
+    password: StrongPassword
 
     @field_validator("admin_email")
     @classmethod
@@ -43,7 +51,7 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
     token: str = Field(min_length=32, max_length=256)
-    password: str = Field(min_length=8, max_length=128)
+    password: StrongPassword
 
 
 class MessageResponse(BaseModel):
@@ -85,7 +93,7 @@ class RegistrationResponse(BaseModel):
 class CreateUserRequest(BaseModel):
     name: str = Field(min_length=2, max_length=160)
     email: str = Field(min_length=5, max_length=320)
-    password: str = Field(min_length=8, max_length=128)
+    password: StrongPassword
     role: UserRole = UserRole.AGENT
 
     @field_validator("email")

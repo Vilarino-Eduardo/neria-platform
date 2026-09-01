@@ -25,7 +25,7 @@
         <label>Nome da empresa<input id="registration-company" minlength="2" maxlength="160" autocomplete="organization" required></label>
         <label>Seu nome<input id="registration-name" minlength="2" maxlength="160" autocomplete="name" required></label>
         <label>E-mail profissional<input id="registration-email" type="email" maxlength="320" autocomplete="email" required></label>
-        <label>Senha<input id="registration-password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required><small>Use pelo menos oito caracteres.</small></label>
+        <label>Senha<input id="registration-password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required><small>Use ao menos 12 caracteres; uma frase longa é uma boa opção.</small></label>
         <p id="registration-error" class="error" role="alert"></p>
         <button class="primary full" type="submit">Criar empresa</button>
         <button class="text-button back-to-login" type="button">Já tenho uma conta</button>
@@ -38,8 +38,8 @@
       </form>
       <form id="reset-form" class="hidden">
         <div><p class="eyebrow">NOVA SENHA</p><h1>Crie uma nova senha</h1><p class="muted">Use pelo menos oito caracteres.</p></div>
-        <label>Nova senha<input id="reset-password" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
-        <label>Confirmar senha<input id="reset-password-confirmation" type="password" minlength="8" maxlength="128" autocomplete="new-password" required></label>
+        <label>Nova senha<input id="reset-password" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
+        <label>Confirmar senha<input id="reset-password-confirmation" type="password" minlength="12" maxlength="128" autocomplete="new-password" required></label>
         <p id="reset-message" class="form-message" role="status"></p>
         <button class="primary full" type="submit">Redefinir senha</button><button class="text-button back-to-login" type="button">Voltar para entrar</button>
       </form>
@@ -300,7 +300,7 @@
         <section class="settings-card">
           <div class="settings-heading"><div><h3>Equipe</h3><p id="team-limit">0 de 3 acessos ativos</p></div><button id="new-user" class="primary" type="button">Adicionar usuário</button></div>
           <form id="user-form" class="user-form hidden">
-            <div class="form-grid"><label>Nome<input id="new-user-name" required minlength="2" maxlength="160"></label><label>E-mail<input id="new-user-email" type="email" required maxlength="320"></label><label>Senha inicial<input id="new-user-password" type="password" required minlength="8" maxlength="128"></label><label>Perfil<select id="new-user-role"><option value="agent">Atendente</option><option value="admin">Administrador</option></select></label></div>
+            <div class="form-grid"><label>Nome<input id="new-user-name" required minlength="2" maxlength="160"></label><label>E-mail<input id="new-user-email" type="email" required maxlength="320"></label><label>Senha inicial<input id="new-user-password" type="password" required minlength="12" maxlength="128"></label><label>Perfil<select id="new-user-role"><option value="agent">Atendente</option><option value="admin">Administrador</option></select></label></div>
             <div class="editor-actions"><button id="cancel-user" class="secondary" type="button">Cancelar</button><div class="spacer"></div><button class="primary" type="submit">Criar acesso</button></div>
           </form>
           <div id="team-list" class="team-list"></div>
