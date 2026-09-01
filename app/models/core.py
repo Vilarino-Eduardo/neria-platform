@@ -310,6 +310,7 @@ class User(TimestampMixin, Base):
     name: Mapped[str] = mapped_column(String(160), nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    session_version: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, native_enum=False, length=20), nullable=False
     )

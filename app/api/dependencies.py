@@ -32,11 +32,12 @@ def get_authenticated_user(
     try:
         payload = decode_access_token(credentials.credentials)
         user_id = uuid.UUID(payload["sub"])
+        session_version = int(payload["session_version"])
     except (jwt.InvalidTokenError, KeyError, ValueError):
         raise unauthorized from None
 
     user = session.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None or not user.is_active or user.session_version != session_version:
         raise unauthorized
 
     return user

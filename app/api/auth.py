@@ -88,6 +88,7 @@ def register_organization(
         user_id=user.id,
         organization_id=organization.id,
         role=user.role.value,
+        session_version=user.session_version,
     )
     return RegistrationResponse(
         organization=OrganizationResponse.model_validate(organization),
@@ -140,6 +141,7 @@ def login(payload: LoginRequest, request: Request, session: DatabaseSession) -> 
             user_id=user.id,
             organization_id=user.organization_id,
             role=user.role.value,
+            session_version=user.session_version,
         )
     )
 
@@ -220,6 +222,7 @@ def reset_password(
     if user is None or not user.is_active:
         raise HTTPException(status_code=400, detail="Link inválido ou expirado.")
     user.password_hash = hash_password(payload.password)
+    user.session_version += 1
     session.execute(
         update(PasswordResetToken)
         .where(

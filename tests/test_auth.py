@@ -74,6 +74,8 @@ def test_registration_login_and_user_limit() -> None:
             json={"token": reset_token, "password": new_password},
         )
         assert reset.status_code == 200
+        expired_session = client.get("/api/v1/auth/me", headers=headers)
+        assert expired_session.status_code == 401
         reused = client.post(
             "/api/v1/auth/reset-password",
             json={"token": reset_token, "password": "outra-senha-789"},
@@ -84,6 +86,7 @@ def test_registration_login_and_user_limit() -> None:
             json={"email": admin_email, "password": new_password},
         )
         assert new_login.status_code == 200
+        headers = {"Authorization": f"Bearer {new_login.json()['access_token']}"}
 
         with patch("app.api.auth.send_password_reset_email") as unknown_email:
             unknown_recovery = client.post(

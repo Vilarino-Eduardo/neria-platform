@@ -19,7 +19,7 @@ def verify_password(password: str, encoded_password: str) -> bool:
 
 
 def create_access_token(
-    *, user_id: uuid.UUID, organization_id: uuid.UUID, role: str
+    *, user_id: uuid.UUID, organization_id: uuid.UUID, role: str, session_version: int
 ) -> str:
     settings = get_settings()
     now = datetime.now(UTC)
@@ -27,6 +27,7 @@ def create_access_token(
         "sub": str(user_id),
         "organization_id": str(organization_id),
         "role": role,
+        "session_version": session_version,
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_expire_minutes),
     }
