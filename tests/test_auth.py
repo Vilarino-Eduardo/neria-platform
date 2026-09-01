@@ -76,6 +76,8 @@ def test_registration_login_and_user_limit() -> None:
         )
         assert login.status_code == 200
         assert login.cookies.get("neria_session") == login.json()["access_token"]
+        csrf_token = login.cookies.get("neria_csrf")
+        assert csrf_token
         assert "httponly" in login.headers["set-cookie"].lower()
         token = login.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
@@ -85,7 +87,11 @@ def test_registration_login_and_user_limit() -> None:
         assert current_user.json()["role"] == "admin"
         assert client.get("/api/v1/auth/me").status_code == 200
 
-        logout = client.post("/api/v1/auth/logout")
+        refused_logout = client.post("/api/v1/auth/logout")
+        assert refused_logout.status_code == 403
+        logout = client.post(
+            "/api/v1/auth/logout", headers={"X-CSRF-Token": csrf_token}
+        )
         assert logout.status_code == 204
         assert client.get("/api/v1/auth/me").status_code == 401
         login = client.post(

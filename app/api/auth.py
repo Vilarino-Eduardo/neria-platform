@@ -6,7 +6,13 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
 from sqlalchemy import select, update
 
-from app.api.dependencies import SESSION_COOKIE_NAME, AuthenticatedUser, DatabaseSession
+from app.api.dependencies import (
+    CSRF_COOKIE_NAME,
+    SESSION_COOKIE_NAME,
+    AuthenticatedUser,
+    DatabaseSession,
+    enforce_cookie_csrf,
+)
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.settings import get_settings
 from app.models.core import (
@@ -42,6 +48,15 @@ def set_session_cookie(response: Response, token: str) -> None:
         value=token,
         max_age=settings.access_token_expire_minutes * 60,
         httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
+    response.set_cookie(
+        key=CSRF_COOKIE_NAME,
+        value=secrets.token_urlsafe(32),
+        max_age=settings.access_token_expire_minutes * 60,
+        httponly=False,
         secure=settings.environment == "production",
         samesite="lax",
         path="/",
@@ -206,10 +221,17 @@ def login(
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response) -> None:
+def logout(request: Request, response: Response) -> None:
+    enforce_cookie_csrf(request)
     response.delete_cookie(
         key=SESSION_COOKIE_NAME,
         httponly=True,
+        secure=get_settings().environment == "production",
+        samesite="lax",
+        path="/",
+    )
+    response.delete_cookie(
+        key=CSRF_COOKIE_NAME,
         secure=get_settings().environment == "production",
         samesite="lax",
         path="/",

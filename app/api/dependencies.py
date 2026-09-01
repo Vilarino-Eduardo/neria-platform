@@ -1,3 +1,4 @@
+import secrets
 import uuid
 from datetime import UTC, datetime
 from typing import Annotated
@@ -15,6 +16,17 @@ from app.models.core import Subscription, SubscriptionStatus, User
 DatabaseSession = Annotated[Session, Depends(get_database_session)]
 bearer_scheme = HTTPBearer(auto_error=False)
 SESSION_COOKIE_NAME = "neria_session"
+CSRF_COOKIE_NAME = "neria_csrf"
+SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+
+
+def enforce_cookie_csrf(request: Request) -> None:
+    if request.method in SAFE_METHODS or SESSION_COOKIE_NAME not in request.cookies:
+        return
+    cookie_token = request.cookies.get(CSRF_COOKIE_NAME, "")
+    header_token = request.headers.get("X-CSRF-Token", "")
+    if not cookie_token or not secrets.compare_digest(cookie_token, header_token):
+        raise HTTPException(status_code=403, detail="Proteção CSRF inválida.")
 
 
 def get_authenticated_user(
@@ -31,6 +43,8 @@ def get_authenticated_user(
     token = credentials.credentials if credentials else request.cookies.get(SESSION_COOKIE_NAME)
     if token is None:
         raise unauthorized
+    if credentials is None:
+        enforce_cookie_csrf(request)
 
     try:
         payload = decode_access_token(token)
