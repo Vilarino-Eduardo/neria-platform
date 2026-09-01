@@ -1,4 +1,5 @@
 import pytest
+from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
 from app.application import app, validate_production_settings
@@ -36,3 +37,52 @@ def test_production_rejects_default_secrets() -> None:
 
     with pytest.raises(RuntimeError, match="Configuração insegura"):
         validate_production_settings(settings)
+
+
+def test_production_rejects_documented_placeholders() -> None:
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        secret_key="change-this-development-key-before-production-123456",
+        meta_app_secret="change-this-meta-app-secret-with-more-characters",
+        meta_webhook_verify_token="change-this-webhook-verify-token",
+        credential_encryption_key=Fernet.generate_key().decode(),
+        object_storage_backend="r2",
+        r2_endpoint_url="https://example.invalid",
+        r2_access_key_id="change-this",
+        r2_secret_access_key="change-this",
+        r2_bucket_name="change-this",
+        password_reset_url="https://example.invalid/reset?token={token}",
+        smtp_host="smtp.example.invalid",
+    )
+
+    with pytest.raises(RuntimeError) as error:
+        validate_production_settings(settings)
+
+    message = str(error.value)
+    assert "SECRET_KEY" in message
+    assert "META_APP_SECRET" in message
+    assert "META_WEBHOOK_VERIFY_TOKEN" in message
+    assert "R2_ACCESS_KEY_ID" in message
+    assert "PASSWORD_RESET_URL" not in message
+
+
+def test_production_accepts_strong_complete_configuration() -> None:
+    settings = Settings(
+        _env_file=None,
+        environment="production",
+        secret_key="7b2d62b6b73041c8967a42377149c90f",
+        meta_app_secret="8b7f506cd4d44a949aa0b15b553fdb25",
+        meta_webhook_verify_token="f23b77b5d58c43b6896165aa",
+        credential_encryption_key=Fernet.generate_key().decode(),
+        object_storage_backend="r2",
+        r2_endpoint_url="https://storage.neria.test",
+        r2_access_key_id="r2-access-5f20c1",
+        r2_secret_access_key="r2-secret-b40e1df6f7c3497b",
+        r2_bucket_name="neria-production-data",
+        password_reset_url="https://app.neria.test/?reset_token={token}",
+        smtp_host="smtp.neria.test",
+        smtp_use_tls=True,
+    )
+
+    validate_production_settings(settings)

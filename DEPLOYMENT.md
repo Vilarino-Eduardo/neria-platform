@@ -29,16 +29,19 @@ Configure nos dois serviços:
 - `DEBUG=false`
 - `DATABASE_URL` referenciando o PostgreSQL; use o formato `postgresql+psycopg://...`.
 - `REDIS_URL` referenciando o Redis.
-- `SECRET_KEY` aleatória e longa.
-- `CREDENTIAL_ENCRYPTION_KEY` gerada para a aplicação.
-- `META_APP_SECRET` e `META_WEBHOOK_VERIFY_TOKEN`.
+- `SECRET_KEY` aleatória com pelo menos 32 caracteres.
+- `CREDENTIAL_ENCRYPTION_KEY` no formato Fernet, gerada exclusivamente para a aplicação.
+- `META_APP_SECRET` com pelo menos 32 caracteres e `META_WEBHOOK_VERIFY_TOKEN` com pelo menos 24.
 - `OBJECT_STORAGE_BACKEND=r2`.
 - `R2_ENDPOINT_URL=https://<ACCOUNT_ID>.r2.cloudflarestorage.com`.
 - `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_BUCKET_NAME`.
-- Credenciais SMTP e `PASSWORD_RESET_URL` usando o domínio público.
+- `SMTP_HOST`, `SMTP_USE_TLS=true` e as credenciais SMTP exigidas pelo provedor.
+- `PASSWORD_RESET_URL` em HTTPS, usando o domínio público e contendo `{token}`.
 - `OPENAI_API_KEY` quando a IA real for ativada.
 
 O token do R2 deve ter leitura e escrita somente no bucket da Neria. O bucket permanece privado.
+Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
+`ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 
 ## Backups
 

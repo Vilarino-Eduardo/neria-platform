@@ -51,7 +51,7 @@ class SMTPMailer:
 def send_password_reset_email(email: str, reset_url: str) -> None:
     settings = get_settings()
     if not settings.smtp_host:
-        logger.warning("Password reset link for %s: %s", email, reset_url)
+        logger.warning("Password reset email skipped because SMTP is not configured")
         return
     message = build_password_reset_message(
         email,

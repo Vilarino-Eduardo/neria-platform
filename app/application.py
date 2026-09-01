@@ -1,9 +1,12 @@
+import binascii
 import logging
 import re
 import time
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
+from cryptography.fernet import Fernet
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -14,30 +17,57 @@ from app.core.settings import get_settings
 
 logger = logging.getLogger("neria.http")
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+PLACEHOLDER_MARKERS = (
+    "change-this",
+    "changeme",
+    "development",
+    "example",
+    "placeholder",
+    "replace-me",
+    "your-",
+)
+
+
+def is_placeholder(value: str | None) -> bool:
+    normalized = (value or "").strip().casefold()
+    return not normalized or any(marker in normalized for marker in PLACEHOLDER_MARKERS)
 
 
 def validate_production_settings(settings) -> None:
     if settings.environment != "production":
         return
     invalid = []
-    if settings.secret_key == "development-only-change-this-key-before-production":
+    if is_placeholder(settings.secret_key) or len(settings.secret_key) < 32:
         invalid.append("SECRET_KEY")
-    if settings.meta_app_secret == "development-meta-app-secret":
+    if is_placeholder(settings.meta_app_secret) or len(settings.meta_app_secret) < 32:
         invalid.append("META_APP_SECRET")
-    if settings.meta_webhook_verify_token == "development-webhook-token":
+    if is_placeholder(settings.meta_webhook_verify_token) or len(
+        settings.meta_webhook_verify_token
+    ) < 24:
         invalid.append("META_WEBHOOK_VERIFY_TOKEN")
-    if not settings.credential_encryption_key:
+    try:
+        Fernet((settings.credential_encryption_key or "").encode("ascii"))
+    except (ValueError, TypeError, UnicodeEncodeError, binascii.Error):
         invalid.append("CREDENTIAL_ENCRYPTION_KEY")
     if settings.object_storage_backend != "r2":
         invalid.append("OBJECT_STORAGE_BACKEND=r2")
-    if not settings.r2_endpoint_url:
+    if is_placeholder(settings.r2_endpoint_url) or urlparse(
+        settings.r2_endpoint_url or ""
+    ).scheme != "https":
         invalid.append("R2_ENDPOINT_URL")
-    if not settings.r2_access_key_id:
+    if is_placeholder(settings.r2_access_key_id):
         invalid.append("R2_ACCESS_KEY_ID")
-    if not settings.r2_secret_access_key:
+    if is_placeholder(settings.r2_secret_access_key):
         invalid.append("R2_SECRET_ACCESS_KEY")
-    if not settings.r2_bucket_name:
+    if is_placeholder(settings.r2_bucket_name):
         invalid.append("R2_BUCKET_NAME")
+    reset_url = urlparse(settings.password_reset_url)
+    if reset_url.scheme != "https" or "{token}" not in settings.password_reset_url:
+        invalid.append("PASSWORD_RESET_URL=https://...{token}")
+    if is_placeholder(settings.smtp_host):
+        invalid.append("SMTP_HOST")
+    if not settings.smtp_use_tls:
+        invalid.append("SMTP_USE_TLS=true")
     if invalid:
         raise RuntimeError(
             "Configuração insegura para produção. Defina: " + ", ".join(invalid)
