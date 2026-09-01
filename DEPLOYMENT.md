@@ -37,6 +37,7 @@ Configure nos dois serviços:
 - `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` e `R2_BUCKET_NAME`.
 - `SMTP_HOST`, `SMTP_USE_TLS=true` e as credenciais SMTP exigidas pelo provedor.
 - `PASSWORD_RESET_URL` em HTTPS, usando o domínio público e contendo `{token}`.
+- `REGISTRATION_IP_LIMIT=20` e `REGISTRATION_RATE_WINDOW_SECONDS=3600` limitam cadastros públicos por IP.
 - `OPENAI_API_KEY` quando a IA real for ativada.
 
 O token do R2 deve ter leitura e escrita somente no bucket da Neria. O bucket permanece privado.

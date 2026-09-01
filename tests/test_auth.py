@@ -12,6 +12,28 @@ from app.models.core import Organization
 client = TestClient(app)
 
 
+def test_registration_is_rate_limited_by_ip() -> None:
+    suffix = uuid.uuid4().hex[:10]
+    with (
+        patch("app.api.auth.retry_after", return_value=37),
+        patch("app.api.auth.record_attempt") as record,
+    ):
+        response = client.post(
+            "/api/v1/auth/register",
+            json={
+                "organization_name": "Empresa limitada",
+                "organization_slug": f"limitada-{suffix}",
+                "admin_name": "Administrador",
+                "admin_email": f"limitada-{suffix}@example.com",
+                "password": "senha-segura-123",
+            },
+        )
+
+    assert response.status_code == 429
+    assert response.headers["Retry-After"] == "37"
+    record.assert_not_called()
+
+
 def test_registration_login_and_user_limit() -> None:
     suffix = uuid.uuid4().hex[:10]
     slug = f"empresa-{suffix}"

@@ -53,8 +53,14 @@ def enforce_rate_limits(rules: list[tuple[str, str, int]]) -> None:
 @router.post("/register", response_model=RegistrationResponse, status_code=status.HTTP_201_CREATED)
 def register_organization(
     payload: RegisterOrganizationRequest,
+    request: Request,
     session: DatabaseSession,
 ) -> RegistrationResponse:
+    settings = get_settings()
+    ip = client_ip(request)
+    enforce_rate_limits([("registration:ip", ip, settings.registration_ip_limit)])
+    record_attempt("registration:ip", ip, settings.registration_rate_window_seconds)
+
     slug_exists = session.scalar(
         select(Organization.id).where(Organization.slug == payload.organization_slug)
     )
@@ -70,7 +76,7 @@ def register_organization(
     subscription = Subscription(
         organization=organization,
         plan_code="starter",
-        trial_ends_at=datetime.now(UTC) + timedelta(days=get_settings().trial_days),
+        trial_ends_at=datetime.now(UTC) + timedelta(days=settings.trial_days),
     )
     user = User(
         organization=organization,

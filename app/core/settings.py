@@ -41,6 +41,8 @@ class Settings(BaseSettings):
     smtp_password: str | None = None
     smtp_from_email: str = "nao-responda@neria.local"
     smtp_use_tls: bool = True
+    registration_ip_limit: int = 20
+    registration_rate_window_seconds: int = 3600
     login_attempt_limit: int = 5
     login_ip_limit: int = 30
     login_rate_window_seconds: int = 900
