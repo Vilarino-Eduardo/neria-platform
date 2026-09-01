@@ -24,3 +24,5 @@ def test_web_application_is_served() -> None:
     assert "Código de suporte" in javascript.text
     assert "displayConversation" in javascript.text
     assert "conversation.status!=='closed'" in javascript.text
+    assert "renderKnowledgeEmptyState" in javascript.text
+    assert "Selecione uma fonte" in javascript.text
