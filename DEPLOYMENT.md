@@ -46,6 +46,7 @@ Defina `TRUSTED_PROXY_NETWORKS` com os IPs ou CIDRs dos proxies que podem enviar
 Não use `0.0.0.0/0`: conexões fora dessas redes ignoram o cabeçalho para impedir falsificação do IP.
 Se o Redis ficar indisponível, cada instância aplica temporariamente os limites em memória.
 Essa contingência reduz abuso durante falhas, mas não substitui o Redis no controle distribuído.
+A interface usa cookie de sessão `HttpOnly`, `SameSite=Lax` e `Secure` automaticamente em produção.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 

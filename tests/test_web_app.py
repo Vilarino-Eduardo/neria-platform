@@ -20,6 +20,8 @@ def test_web_application_is_served() -> None:
     assert stylesheet.status_code == 200
     assert javascript.status_code == 200
     assert "registerOrganization" in javascript.text
+    assert "neria_token" not in javascript.text
+    assert "Authorization" not in javascript.text
     assert "E-mail ou senha inválidos." in javascript.text
     assert "Código de suporte" in javascript.text
     assert "displayConversation" in javascript.text

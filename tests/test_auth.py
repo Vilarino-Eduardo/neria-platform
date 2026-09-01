@@ -75,12 +75,26 @@ def test_registration_login_and_user_limit() -> None:
             json={"email": admin_email, "password": password},
         )
         assert login.status_code == 200
+        assert login.cookies.get("neria_session") == login.json()["access_token"]
+        assert "httponly" in login.headers["set-cookie"].lower()
         token = login.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         current_user = client.get("/api/v1/auth/me", headers=headers)
         assert current_user.status_code == 200
         assert current_user.json()["role"] == "admin"
+        assert client.get("/api/v1/auth/me").status_code == 200
+
+        logout = client.post("/api/v1/auth/logout")
+        assert logout.status_code == 204
+        assert client.get("/api/v1/auth/me").status_code == 401
+        login = client.post(
+            "/api/v1/auth/login",
+            json={"email": admin_email, "password": password},
+        )
+        assert login.status_code == 200
+        token = login.json()["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
 
         subscription = client.get("/api/v1/billing/subscription", headers=headers)
         assert subscription.status_code == 200

@@ -3,10 +3,10 @@ import ipaddress
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
 from sqlalchemy import select, update
 
-from app.api.dependencies import AuthenticatedUser, DatabaseSession
+from app.api.dependencies import SESSION_COOKIE_NAME, AuthenticatedUser, DatabaseSession
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.settings import get_settings
 from app.models.core import (
@@ -33,6 +33,19 @@ from app.services.email_service import send_password_reset_email
 from app.services.rate_limit import clear_attempts, record_attempt, retry_after
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+def set_session_cookie(response: Response, token: str) -> None:
+    settings = get_settings()
+    response.set_cookie(
+        key=SESSION_COOKIE_NAME,
+        value=token,
+        max_age=settings.access_token_expire_minutes * 60,
+        httponly=True,
+        secure=settings.environment == "production",
+        samesite="lax",
+        path="/",
+    )
 
 
 def resolve_client_ip(peer: str, forwarded_for: str | None, trusted_networks: str) -> str:
@@ -87,6 +100,7 @@ def enforce_rate_limits(rules: list[tuple[str, str, int]]) -> None:
 def register_organization(
     payload: RegisterOrganizationRequest,
     request: Request,
+    response: Response,
     session: DatabaseSession,
 ) -> RegistrationResponse:
     settings = get_settings()
@@ -129,6 +143,7 @@ def register_organization(
         role=user.role.value,
         session_version=user.session_version,
     )
+    set_session_cookie(response, token)
     return RegistrationResponse(
         organization=OrganizationResponse.model_validate(organization),
         user=UserResponse.model_validate(user),
@@ -137,7 +152,12 @@ def register_organization(
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, request: Request, session: DatabaseSession) -> TokenResponse:
+def login(
+    payload: LoginRequest,
+    request: Request,
+    response: Response,
+    session: DatabaseSession,
+) -> TokenResponse:
     settings = get_settings()
     ip = client_ip(request)
     rules = [
@@ -175,13 +195,24 @@ def login(payload: LoginRequest, request: Request, session: DatabaseSession) -> 
     )
     session.commit()
 
-    return TokenResponse(
-        access_token=create_access_token(
-            user_id=user.id,
-            organization_id=user.organization_id,
-            role=user.role.value,
-            session_version=user.session_version,
-        )
+    token = create_access_token(
+        user_id=user.id,
+        organization_id=user.organization_id,
+        role=user.role.value,
+        session_version=user.session_version,
+    )
+    set_session_cookie(response, token)
+    return TokenResponse(access_token=token)
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(response: Response) -> None:
+    response.delete_cookie(
+        key=SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=get_settings().environment == "production",
+        samesite="lax",
+        path="/",
     )
 
 

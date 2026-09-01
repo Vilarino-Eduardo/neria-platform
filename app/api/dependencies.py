@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -14,9 +14,11 @@ from app.models.core import Subscription, SubscriptionStatus, User
 
 DatabaseSession = Annotated[Session, Depends(get_database_session)]
 bearer_scheme = HTTPBearer(auto_error=False)
+SESSION_COOKIE_NAME = "neria_session"
 
 
 def get_authenticated_user(
+    request: Request,
     session: DatabaseSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
 ) -> User:
@@ -26,11 +28,12 @@ def get_authenticated_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    if credentials is None:
+    token = credentials.credentials if credentials else request.cookies.get(SESSION_COOKIE_NAME)
+    if token is None:
         raise unauthorized
 
     try:
-        payload = decode_access_token(credentials.credentials)
+        payload = decode_access_token(token)
         user_id = uuid.UUID(payload["sub"])
         session_version = int(payload["session_version"])
     except (jwt.InvalidTokenError, KeyError, ValueError):
