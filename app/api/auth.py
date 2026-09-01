@@ -1,4 +1,5 @@
 import hashlib
+import ipaddress
 import secrets
 from datetime import UTC, datetime, timedelta
 
@@ -34,8 +35,40 @@ from app.services.rate_limit import clear_attempts, record_attempt, retry_after
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
+def resolve_client_ip(peer: str, forwarded_for: str | None, trusted_networks: str) -> str:
+    try:
+        peer_address = ipaddress.ip_address(peer)
+        networks = [
+            ipaddress.ip_network(item.strip())
+            for item in trusted_networks.split(",")
+            if item.strip()
+        ]
+    except ValueError:
+        return peer
+
+    if not any(peer_address in network for network in networks) or not forwarded_for:
+        return peer_address.compressed
+
+    try:
+        forwarded_addresses = [
+            ipaddress.ip_address(item.strip()) for item in forwarded_for.split(",")
+        ]
+    except ValueError:
+        return peer_address.compressed
+
+    for address in reversed([*forwarded_addresses, peer_address]):
+        if not any(address in network for network in networks):
+            return address.compressed
+    return forwarded_addresses[0].compressed
+
+
 def client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+    peer = request.client.host if request.client else "unknown"
+    return resolve_client_ip(
+        peer,
+        request.headers.get("X-Forwarded-For"),
+        get_settings().trusted_proxy_networks,
+    )
 
 
 def enforce_rate_limits(rules: list[tuple[str, str, int]]) -> None:

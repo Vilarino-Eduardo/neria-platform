@@ -5,11 +5,26 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 from sqlalchemy import delete
 
+from app.api.auth import resolve_client_ip
 from app.application import app
 from app.database.session import SessionLocal
 from app.models.core import Organization
 
 client = TestClient(app)
+
+
+def test_client_ip_only_trusts_forwarding_from_configured_proxies() -> None:
+    assert resolve_client_ip("198.51.100.8", "203.0.113.40", "10.0.0.0/8") == "198.51.100.8"
+    assert resolve_client_ip("10.0.0.5", "203.0.113.40", "10.0.0.0/8") == "203.0.113.40"
+    assert (
+        resolve_client_ip(
+            "10.0.0.5",
+            "203.0.113.40, 192.168.1.8",
+            "10.0.0.0/8,192.168.0.0/16",
+        )
+        == "203.0.113.40"
+    )
+    assert resolve_client_ip("10.0.0.5", "not-an-ip", "10.0.0.0/8") == "10.0.0.5"
 
 
 def test_registration_is_rate_limited_by_ip() -> None:

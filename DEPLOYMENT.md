@@ -42,6 +42,8 @@ Configure nos dois serviços:
 
 O token do R2 deve ter leitura e escrita somente no bucket da Neria. O bucket permanece privado.
 As rotas `/docs`, `/redoc` e `/openapi.json` são desativadas automaticamente em produção.
+Defina `TRUSTED_PROXY_NETWORKS` com os IPs ou CIDRs dos proxies que podem enviar `X-Forwarded-For`.
+Não use `0.0.0.0/0`: conexões fora dessas redes ignoram o cabeçalho para impedir falsificação do IP.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 

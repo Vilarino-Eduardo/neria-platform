@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     database_max_overflow: int = 10
     database_pool_timeout_seconds: int = 30
     redis_url: str = "redis://localhost:6379/0"
+    trusted_proxy_networks: str = ""
     knowledge_storage_path: str = "storage/knowledge"
     knowledge_max_file_bytes: int = 10 * 1024 * 1024
     object_storage_backend: str = "local"
