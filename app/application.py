@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.router import api_router
 from app.core.logging import configure_logging
-from app.core.settings import get_settings
+from app.core.settings import Settings, get_settings
 
 logger = logging.getLogger("neria.http")
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
@@ -74,15 +74,19 @@ def validate_production_settings(settings) -> None:
         )
 
 
-def create_application() -> FastAPI:
-    settings = get_settings()
+def create_application(settings: Settings | None = None) -> FastAPI:
+    settings = settings or get_settings()
     validate_production_settings(settings)
     configure_logging(settings.environment)
+    expose_api_documentation = settings.environment != "production"
 
     application = FastAPI(
         title=settings.app_name,
         debug=settings.debug,
         version="0.3.0-alpha.1",
+        docs_url="/docs" if expose_api_documentation else None,
+        redoc_url="/redoc" if expose_api_documentation else None,
+        openapi_url="/openapi.json" if expose_api_documentation else None,
     )
     application.include_router(api_router, prefix=settings.api_prefix)
 

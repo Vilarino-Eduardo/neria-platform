@@ -2,10 +2,39 @@ import pytest
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 
-from app.application import app, validate_production_settings
+from app.application import app, create_application, validate_production_settings
 from app.core.settings import Settings
 
 client = TestClient(app)
+
+
+def secure_production_settings() -> Settings:
+    return Settings(
+        _env_file=None,
+        environment="production",
+        secret_key="7b2d62b6b73041c8967a42377149c90f",
+        meta_app_secret="8b7f506cd4d44a949aa0b15b553fdb25",
+        meta_webhook_verify_token="f23b77b5d58c43b6896165aa",
+        credential_encryption_key=Fernet.generate_key().decode(),
+        object_storage_backend="r2",
+        r2_endpoint_url="https://storage.neria.test",
+        r2_access_key_id="r2-access-5f20c1",
+        r2_secret_access_key="r2-secret-b40e1df6f7c3497b",
+        r2_bucket_name="neria-production-data",
+        password_reset_url="https://app.neria.test/?reset_token={token}",
+        smtp_host="smtp.neria.test",
+        smtp_use_tls=True,
+    )
+
+
+def test_api_documentation_is_only_exposed_outside_production() -> None:
+    assert client.get("/docs").status_code == 200
+    assert client.get("/openapi.json").status_code == 200
+
+    production_client = TestClient(create_application(secure_production_settings()))
+    assert production_client.get("/docs").status_code == 404
+    assert production_client.get("/redoc").status_code == 404
+    assert production_client.get("/openapi.json").status_code == 404
 
 
 def test_health_check() -> None:
@@ -68,21 +97,4 @@ def test_production_rejects_documented_placeholders() -> None:
 
 
 def test_production_accepts_strong_complete_configuration() -> None:
-    settings = Settings(
-        _env_file=None,
-        environment="production",
-        secret_key="7b2d62b6b73041c8967a42377149c90f",
-        meta_app_secret="8b7f506cd4d44a949aa0b15b553fdb25",
-        meta_webhook_verify_token="f23b77b5d58c43b6896165aa",
-        credential_encryption_key=Fernet.generate_key().decode(),
-        object_storage_backend="r2",
-        r2_endpoint_url="https://storage.neria.test",
-        r2_access_key_id="r2-access-5f20c1",
-        r2_secret_access_key="r2-secret-b40e1df6f7c3497b",
-        r2_bucket_name="neria-production-data",
-        password_reset_url="https://app.neria.test/?reset_token={token}",
-        smtp_host="smtp.neria.test",
-        smtp_use_tls=True,
-    )
-
-    validate_production_settings(settings)
+    validate_production_settings(secure_production_settings())

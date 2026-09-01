@@ -41,6 +41,7 @@ Configure nos dois serviços:
 - `OPENAI_API_KEY` quando a IA real for ativada.
 
 O token do R2 deve ter leitura e escrita somente no bucket da Neria. O bucket permanece privado.
+As rotas `/docs`, `/redoc` e `/openapi.json` são desativadas automaticamente em produção.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 
