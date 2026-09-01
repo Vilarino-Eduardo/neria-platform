@@ -4,6 +4,8 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy import delete
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
 from app.api.auth import resolve_client_ip
 from app.application import app
@@ -33,6 +35,28 @@ def test_registration_rejects_common_and_repetitive_passwords() -> None:
 
     assert common.status_code == 422
     assert repetitive.status_code == 422
+
+
+def test_concurrent_registration_conflict_returns_409() -> None:
+    suffix = uuid.uuid4().hex[:10]
+    with patch.object(
+        Session,
+        "commit",
+        side_effect=IntegrityError("INSERT", {}, Exception("unique violation")),
+    ):
+        response = client.post(
+            "/api/v1/auth/register",
+            json={
+                "organization_name": "Empresa concorrente",
+                "organization_slug": f"concorrente-{suffix}",
+                "admin_name": "Administrador",
+                "admin_email": f"concorrente-{suffix}@example.com",
+                "password": "senha-segura-123",
+            },
+        )
+
+    assert response.status_code == 409
+    assert response.json()["detail"] == "Empresa ou e-mail já cadastrado."
 
 
 def test_client_ip_only_trusts_forwarding_from_configured_proxies() -> None:

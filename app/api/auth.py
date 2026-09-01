@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 
 from app.api.dependencies import (
     CSRF_COOKIE_NAME,
@@ -148,7 +149,14 @@ def register_organization(
         role=UserRole.ADMIN,
     )
     session.add_all([organization, profile, subscription, user])
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        raise HTTPException(
+            status_code=409,
+            detail="Empresa ou e-mail já cadastrado.",
+        ) from None
     session.refresh(organization)
     session.refresh(user)
 
