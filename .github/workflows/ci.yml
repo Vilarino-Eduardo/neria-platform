@@ -66,6 +66,9 @@ jobs:
       - name: Run static analysis
         run: ruff check .
 
+      - name: Check tracked files for secrets
+        run: python scripts/check_secrets.py
+
       - name: Apply database migrations
         run: alembic upgrade head
 

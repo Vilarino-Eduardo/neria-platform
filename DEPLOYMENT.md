@@ -63,6 +63,7 @@ Envios de mensagens exigem `Idempotency-Key`; repetições idênticas não são 
 O Celery Beat recupera mensagens pendentes a cada 30 segundos; execute worker e beat em produção.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
+O CI executa `python scripts/check_secrets.py` e bloqueia padrões conhecidos de chaves versionadas.
 
 ## Backups
 
