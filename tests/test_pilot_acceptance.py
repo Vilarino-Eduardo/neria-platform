@@ -223,7 +223,7 @@ def test_complete_pilot_acceptance_journey() -> None:
         with patch("app.api.conversations.send_whatsapp_message.delay") as enqueue:
             human_reply = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers={**headers, "Idempotency-Key": f"pilot-message-{suffix}"},
                 json={"body": "Olá, sou a Marina. Vou cuidar do seu atendimento."},
             )
         assert human_reply.status_code == 201

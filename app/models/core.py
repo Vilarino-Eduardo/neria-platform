@@ -668,6 +668,7 @@ class Message(Base):
     __tablename__ = "messages"
     __table_args__ = (
         Index("ix_messages_conversation_created", "conversation_id", "created_at"),
+        UniqueConstraint("organization_id", "idempotency_key"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -684,6 +685,8 @@ class Message(Base):
         ForeignKey("users.id", ondelete="SET NULL"), index=True
     )
     external_message_id: Mapped[str | None] = mapped_column(String(160), unique=True)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128))
+    idempotency_payload_hash: Mapped[str | None] = mapped_column(String(64))
     direction: Mapped[MessageDirection] = mapped_column(
         Enum(MessageDirection, native_enum=False, length=20), nullable=False
     )

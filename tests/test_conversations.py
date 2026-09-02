@@ -227,15 +227,29 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         assert isolated_events.status_code == 404
 
         with patch("app.api.conversations.send_whatsapp_message.delay") as enqueue:
+            message_headers = {**headers, "Idempotency-Key": f"message-main-{suffix}"}
             message = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers=message_headers,
                 json={"body": "Olá, cliente!"},
+            )
+            repeated_message = client.post(
+                f"/api/v1/conversations/{conversation_id}/messages",
+                headers=message_headers,
+                json={"body": "Olá, cliente!"},
+            )
+            conflicting_message = client.post(
+                f"/api/v1/conversations/{conversation_id}/messages",
+                headers=message_headers,
+                json={"body": "Conteúdo diferente"},
             )
         assert message.status_code == 201
         assert message.json()["direction"] == "outbound"
         assert message.json()["status"] == "queued"
         assert message.json()["sender_user_id"] == current_user["id"]
+        assert repeated_message.status_code == 201
+        assert repeated_message.json()["id"] == message.json()["id"]
+        assert conflicting_message.status_code == 409
         enqueue.assert_called_once_with(message.json()["id"])
 
         team_dashboard = client.get("/api/v1/dashboard", headers=headers)
@@ -271,7 +285,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         assert contact_blocked.status_code == 200
         blocked_contact_message = client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
-            headers=headers,
+            headers={**headers, "Idempotency-Key": f"message-blocked-{suffix}"},
             json={"body": "Esta mensagem não pode ser enviada"},
         )
         assert blocked_contact_message.status_code == 409
@@ -322,7 +336,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         with patch("app.api.conversations.send_whatsapp_message.delay"):
             media = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers={**headers, "Idempotency-Key": f"message-media-{suffix}"},
                 json={
                     "message_type": "document",
                     "body": "Documento solicitado",
@@ -332,7 +346,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
             )
             interactive = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers={**headers, "Idempotency-Key": f"message-interactive-{suffix}"},
                 json={
                     "message_type": "interactive",
                     "interactive": {
@@ -367,7 +381,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
 
         blocked = client.post(
             f"/api/v1/conversations/{conversation_id}/messages",
-            headers=headers,
+            headers={**headers, "Idempotency-Key": f"message-window-{suffix}"},
             json={"body": "Mensagem comum fora da janela"},
         )
         assert blocked.status_code == 409
@@ -375,7 +389,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         with patch("app.api.conversations.send_whatsapp_message.delay"):
             templated = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers={**headers, "Idempotency-Key": f"message-template-{suffix}"},
                 json={
                     "message_type": "template",
                     "template_id": template_id,

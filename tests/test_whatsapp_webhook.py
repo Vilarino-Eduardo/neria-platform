@@ -191,7 +191,7 @@ def test_whatsapp_account_and_signed_webhook() -> None:
         with patch("app.api.conversations.send_whatsapp_message.delay"):
             outbound = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
-                headers=headers,
+                headers={**headers, "Idempotency-Key": f"webhook-message-{suffix}"},
                 json={"body": "Olá! Como posso ajudar?"},
             )
         assert outbound.status_code == 201

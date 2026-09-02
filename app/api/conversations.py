@@ -1,8 +1,12 @@
+import hashlib
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Header, HTTPException, Query, status
 from sqlalchemy import case, select, true
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import aliased
 
 from app.api.dependencies import CurrentUser, DatabaseSession
@@ -444,10 +448,37 @@ def create_outbound_message(
     payload: MessageCreate,
     session: DatabaseSession,
     current_user: CurrentUser,
+    idempotency_key: Annotated[
+        str,
+        Header(alias="Idempotency-Key", min_length=16, max_length=128),
+    ],
 ) -> Message:
     conversation = get_organization_conversation(
         session, current_user.organization_id, conversation_id
     )
+    payload_hash = hashlib.sha256(
+        json.dumps(
+            {
+                "conversation_id": str(conversation.id),
+                "payload": payload.model_dump(mode="json"),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    existing_message = session.scalar(
+        select(Message).where(
+            Message.organization_id == current_user.organization_id,
+            Message.idempotency_key == idempotency_key,
+        )
+    )
+    if existing_message:
+        if existing_message.idempotency_payload_hash != payload_hash:
+            raise HTTPException(
+                status_code=409,
+                detail="A chave de idempotência já foi usada com outro conteúdo.",
+            )
+        return existing_message
     if conversation.status == ConversationStatus.CLOSED:
         raise HTTPException(status_code=409, detail="A conversa está encerrada.")
     contact = session.get(Contact, conversation.contact_id)
@@ -502,11 +533,28 @@ def create_outbound_message(
         media_url=str(payload.media_url) if payload.media_url else None,
         media_filename=payload.media_filename,
         raw_payload=raw_payload,
+        idempotency_key=idempotency_key,
+        idempotency_payload_hash=payload_hash,
     )
     conversation.last_message_at = sent_at
     conversation.last_human_response_at = sent_at
     session.add(message)
-    session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        existing_message = session.scalar(
+            select(Message).where(
+                Message.organization_id == current_user.organization_id,
+                Message.idempotency_key == idempotency_key,
+            )
+        )
+        if existing_message and existing_message.idempotency_payload_hash == payload_hash:
+            return existing_message
+        raise HTTPException(
+            status_code=409,
+            detail="A chave de idempotência já foi usada com outro conteúdo.",
+        ) from None
     session.refresh(message)
     send_whatsapp_message.delay(str(message.id))
     return message
