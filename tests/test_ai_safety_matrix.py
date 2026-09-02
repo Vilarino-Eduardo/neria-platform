@@ -147,15 +147,19 @@ def test_ai_safety_matrix_without_external_calls(
     }
 
     try:
-        configuration = client.patch(
-            "/api/v1/ai/configuration",
-            headers=headers,
-            json={
-                "is_enabled": True,
-                "minimum_confidence": 70,
-                "fallback_message": FALLBACK,
-            },
-        )
+        with patch(
+            "app.api.ai.get_settings",
+            return_value=SimpleNamespace(openai_api_key="offline-test-key"),
+        ):
+            configuration = client.patch(
+                "/api/v1/ai/configuration",
+                headers=headers,
+                json={
+                    "is_enabled": True,
+                    "minimum_confidence": 70,
+                    "fallback_message": FALLBACK,
+                },
+            )
         assert configuration.status_code == 200
         if name == "profile_only_context":
             profile = client.patch(
