@@ -15,6 +15,7 @@ annotated-types==0.8.0
 anyio==4.14.2
     # via
     #   httpx
+    #   httpx2
     #   openai
     #   starlette
     #   watchfiles
@@ -70,19 +71,25 @@ greenlet==3.5.5
 h11==0.16.0
     # via
     #   httpcore
+    #   httpcore2
     #   uvicorn
 httpcore==1.0.9
     # via httpx
+httpcore2==2.12.0
+    # via httpx2
 httptools==0.8.0
     # via uvicorn
 httpx==0.28.1
     # via
     #   neria (pyproject.toml)
     #   openai
+httpx2==2.12.0
+    # via neria (pyproject.toml)
 idna==3.19
     # via
     #   anyio
     #   httpx
+    #   httpx2
 iniconfig==2.3.0
     # via pytest
 jiter==0.16.0
@@ -172,6 +179,10 @@ starlette==1.6.0
     # via fastapi
 tqdm==4.70.0
     # via openai
+truststore==0.10.4
+    # via
+    #   httpcore2
+    #   httpx2
 typing-extensions==4.16.0
     # via
     #   alembic
