@@ -17,15 +17,16 @@ python scripts/check_secrets.py
 
 ## Avaliação controlada da IA real
 
-O avaliador executa três chamadas pagas, com no máximo 300 tokens de saída por chamada. Sem a
+O avaliador executa quatro chamadas pagas, com no máximo 300 tokens de saída por chamada. Sem a
 confirmação explícita, ele encerra antes de acessar a OpenAI:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\evaluate_ai.py
 .\.venv\Scripts\python.exe scripts\evaluate_ai.py --confirm-paid-api
+.\.venv\Scripts\python.exe scripts\evaluate_ai.py --scenario instrucao_maliciosa_na_fonte --confirm-paid-api
 ```
 
-Use a segunda forma somente em homologações autorizadas. A execução informa chamadas, tokens,
+Use as formas pagas somente em homologações autorizadas. A última executa apenas um cenário. A execução informa chamadas, tokens,
 latência e aprovação de cada cenário, sem exibir a chave da API.
 
 Para validar uma única resposta pelo pipeline completo — recuperação de conhecimento, cota,
