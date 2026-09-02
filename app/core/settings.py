@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     s3_bucket_name: str = "neria-knowledge"
     s3_region: str = "us-east-1"
     openai_api_key: str | None = None
-    openai_model: str = "gpt-5.6-luna"
+    openai_model: str = "gpt-5-mini"
     password_reset_expire_minutes: int = 30
     password_reset_url: str = "http://localhost:8000/?reset_token={token}"
     smtp_host: str | None = None
