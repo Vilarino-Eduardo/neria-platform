@@ -14,3 +14,16 @@ Antes de criar um commit, verifique se nenhum segredo entrou nos arquivos rastre
 ```bash
 python scripts/check_secrets.py
 ```
+
+## Avaliação controlada da IA real
+
+O avaliador executa três chamadas pagas, com no máximo 300 tokens de saída por chamada. Sem a
+confirmação explícita, ele encerra antes de acessar a OpenAI:
+
+```powershell
+.\.venv\Scripts\python.exe scripts\evaluate_ai.py
+.\.venv\Scripts\python.exe scripts\evaluate_ai.py --confirm-paid-api
+```
+
+Use a segunda forma somente em homologações autorizadas. A execução informa chamadas, tokens,
+latência e aprovação de cada cenário, sem exibir a chave da API.

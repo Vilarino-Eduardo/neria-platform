@@ -11,9 +11,18 @@ class OpenAIAnswer(BaseModel):
 
 
 class OpenAIResponsesProvider(AIProvider):
-    def __init__(self, *, api_key: str, model: str) -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model: str,
+        max_output_tokens: int = 600,
+    ) -> None:
+        if not 64 <= max_output_tokens <= 600:
+            raise ValueError("max_output_tokens deve estar entre 64 e 600.")
         self.client = OpenAI(api_key=api_key, timeout=30, max_retries=2)
         self.model = model
+        self.max_output_tokens = max_output_tokens
 
     def generate(self, request: AIRequest) -> AIResult:
         knowledge = "\n\n".join(
@@ -32,7 +41,7 @@ class OpenAIResponsesProvider(AIProvider):
             text_format=OpenAIAnswer,
             reasoning={"effort": "low"},
             store=False,
-            max_output_tokens=600,
+            max_output_tokens=self.max_output_tokens,
         )
         parsed = response.output_parsed
         if parsed is None:

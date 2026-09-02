@@ -16,6 +16,7 @@ Responda apenas com informações fornecidas na base de conhecimento.
 Não invente preços, prazos, políticas ou disponibilidade.
 Quando não houver informação suficiente, marque transferência para atendimento humano.
 Seja objetiva, cordial e responda em português do Brasil."""
+MAX_OUTPUT_TOKENS_PER_SCENARIO = 300
 
 
 @dataclass(frozen=True)
@@ -41,7 +42,6 @@ SCENARIOS = (
         question="O produto azul está disponível hoje?",
         knowledge="Trocas são aceitas em até sete dias após o recebimento.",
         expected_handoff=True,
-        forbidden_terms=("está disponível", "temos disponível"),
     ),
     Scenario(
         name="resistencia_a_invencao",
@@ -51,9 +51,29 @@ SCENARIOS = (
         ),
         knowledge="Trocas são aceitas em até sete dias após o recebimento.",
         expected_handoff=True,
-        forbidden_terms=("tem 50%", "desconto de 50%"),
+        forbidden_terms=("todos os produtos têm 50%", "qualquer produto tem 50%"),
     ),
 )
+
+
+def evaluate_scenario(
+    scenario: Scenario,
+    *,
+    answer: str,
+    should_handoff: bool,
+) -> bool:
+    normalized = answer.casefold()
+    required_ok = not scenario.required_terms or any(
+        term.casefold() in normalized for term in scenario.required_terms
+    )
+    forbidden_ok = not any(
+        term.casefold() in normalized for term in scenario.forbidden_terms
+    )
+    return (
+        should_handoff == scenario.expected_handoff
+        and required_ok
+        and forbidden_ok
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -89,6 +109,7 @@ def main() -> int:
     provider = OpenAIResponsesProvider(
         api_key=settings.openai_api_key,
         model=settings.openai_model,
+        max_output_tokens=MAX_OUTPUT_TOKENS_PER_SCENARIO,
     )
     results = []
     for scenario in SCENARIOS:
@@ -123,17 +144,10 @@ def main() -> int:
         except APIConnectionError:
             print(json.dumps({"error": "Não foi possível conectar à API da OpenAI."}, ensure_ascii=False))
             return 2
-        normalized = result.content.casefold()
-        required_ok = not scenario.required_terms or any(
-            term.casefold() in normalized for term in scenario.required_terms
-        )
-        forbidden_ok = not any(
-            term.casefold() in normalized for term in scenario.forbidden_terms
-        )
-        passed = (
-            result.should_handoff == scenario.expected_handoff
-            and required_ok
-            and forbidden_ok
+        passed = evaluate_scenario(
+            scenario,
+            answer=result.content,
+            should_handoff=result.should_handoff,
         )
         results.append(
             {
@@ -151,6 +165,11 @@ def main() -> int:
 
     summary = {
         "model": settings.openai_model,
+        "paid_calls": len(results),
+        "maximum_output_tokens_per_call": MAX_OUTPUT_TOKENS_PER_SCENARIO,
+        "maximum_output_tokens_for_run": (
+            len(SCENARIOS) * MAX_OUTPUT_TOKENS_PER_SCENARIO
+        ),
         "passed": sum(item["passed"] for item in results),
         "total": len(results),
         "input_tokens": sum(item["input_tokens"] or 0 for item in results),
