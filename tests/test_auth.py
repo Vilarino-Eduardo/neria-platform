@@ -152,6 +152,8 @@ def test_registration_login_and_user_limit() -> None:
         assert subscription.status_code == 200
         assert subscription.json()["status"] == "trialing"
         assert subscription.json()["max_users"] == 3
+        assert subscription.json()["ai_daily_request_limit"] == 50
+        assert subscription.json()["ai_daily_token_limit"] == 100_000
 
         initial_onboarding = client.get("/api/v1/onboarding", headers=headers)
         assert initial_onboarding.status_code == 200
@@ -338,10 +340,17 @@ def test_registration_login_and_user_limit() -> None:
             suspended = client.patch(
                 f"/api/v1/billing/internal/organizations/{organization_id}",
                 headers={"X-Billing-Admin-Key": "manual-test-key"},
-                json={"status": "suspended", "notes": "Teste de bloqueio"},
+                json={
+                    "status": "suspended",
+                    "notes": "Teste de bloqueio",
+                    "ai_daily_request_limit": 25,
+                    "ai_daily_token_limit": 40_000,
+                },
             )
         assert suspended.status_code == 200
         assert suspended.json()["status"] == "suspended"
+        assert suspended.json()["ai_daily_request_limit"] == 25
+        assert suspended.json()["ai_daily_token_limit"] == 40_000
         blocked_access = client.get("/api/v1/users", headers=headers)
         assert blocked_access.status_code == 402
         visible_subscription = client.get("/api/v1/billing/subscription", headers=headers)

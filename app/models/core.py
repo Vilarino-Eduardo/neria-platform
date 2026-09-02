@@ -236,6 +236,9 @@ class Subscription(TimestampMixin, Base):
     ai_daily_request_limit: Mapped[int] = mapped_column(
         Integer, default=50, nullable=False
     )
+    ai_daily_token_limit: Mapped[int] = mapped_column(
+        Integer, default=100_000, nullable=False
+    )
 
     organization: Mapped[Organization] = relationship(back_populates="subscription")
 
@@ -250,6 +253,7 @@ class AIUsageDaily(Base):
     request_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     input_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     output_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    reserved_tokens: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -669,7 +673,11 @@ class Message(Base):
     __tablename__ = "messages"
     __table_args__ = (
         Index("ix_messages_conversation_created", "conversation_id", "created_at"),
-        UniqueConstraint("organization_id", "idempotency_key"),
+        UniqueConstraint(
+            "organization_id",
+            "idempotency_key",
+            name="uq_messages_organization_idempotency_key",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

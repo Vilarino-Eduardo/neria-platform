@@ -31,3 +31,5 @@ def test_web_application_is_served() -> None:
     assert "conversation.status!=='closed'" in javascript.text
     assert "renderKnowledgeEmptyState" in javascript.text
     assert "Selecione uma fonte" in javascript.text
+    assert "daily_token_limit" in javascript.text
+    assert "daily_token_quota_status" in javascript.text

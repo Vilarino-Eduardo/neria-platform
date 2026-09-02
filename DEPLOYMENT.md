@@ -64,6 +64,9 @@ O Celery Beat recupera mensagens pendentes a cada 30 segundos; execute worker e 
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 O CI executa `python scripts/check_secrets.py` e bloqueia padrões conhecidos de chaves versionadas.
+Cada assinatura possui limites diários independentes de chamadas e tokens da IA. Antes de chamar o
+provedor, o worker reserva atomicamente um teto conservador de tokens; no sucesso registra o uso
+real e, em falhas, libera a reserva. O padrão inicial é 50 chamadas e 100.000 tokens por dia.
 
 ## Backups
 

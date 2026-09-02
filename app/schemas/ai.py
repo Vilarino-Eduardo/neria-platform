@@ -85,6 +85,11 @@ class AIMetricsResponse(BaseModel):
     daily_input_tokens: int
     daily_output_tokens: int
     daily_total_tokens: int
+    daily_reserved_tokens: int
+    daily_token_limit: int
+    daily_tokens_remaining: int
+    daily_token_quota_percent: int
+    daily_token_quota_status: str
     daily_usage: list[AIDailyUsagePoint]
 
 

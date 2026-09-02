@@ -29,6 +29,7 @@ from app.services.ai.contracts import AIResult
 from app.services.ai.usage import (
     ai_quota_status,
     record_paid_ai_tokens,
+    release_ai_token_reservation,
     reserve_paid_ai_request,
 )
 from app.tasks.ai import generate_ai_reply
@@ -282,6 +283,13 @@ def test_ai_safety_matrix_without_external_calls(
                 assert run.output_tokens == 0
                 assert output.raw_payload["reason"] == "daily_ai_limit_reached"
                 assert run.provider == "local"
+            if name == "provider_failure":
+                usage = session.get(
+                    AIUsageDaily,
+                    (organization_id, datetime.now(UTC).date()),
+                )
+                assert usage.request_count == 1
+                assert usage.reserved_tokens == 0
             if expected_status == AIRunStatus.COMPLETED:
                 assert conversation.mode == ConversationMode.BOT
             else:
@@ -355,6 +363,7 @@ def test_daily_usage_reservation_stops_exactly_at_limit() -> None:
             assert usage.request_count == 2
             assert usage.input_tokens == 150
             assert usage.output_tokens == 30
+            assert usage.reserved_tokens == 0
         metrics = client.get("/api/v1/ai/metrics", headers=headers)
         assert metrics.status_code == 200
         assert metrics.json()["paid_requests_today"] == 2
@@ -365,12 +374,83 @@ def test_daily_usage_reservation_stops_exactly_at_limit() -> None:
         assert metrics.json()["daily_input_tokens"] == 150
         assert metrics.json()["daily_output_tokens"] == 30
         assert metrics.json()["daily_total_tokens"] == 180
+        assert metrics.json()["daily_reserved_tokens"] == 0
+        assert metrics.json()["daily_token_limit"] == 100_000
+        assert metrics.json()["daily_tokens_remaining"] == 99_820
+        assert metrics.json()["daily_token_quota_status"] == "normal"
         history = metrics.json()["daily_usage"]
         assert len(history) == 30
         assert history[-1]["date"] == datetime.now(UTC).date().isoformat()
         assert history[-1]["paid_requests"] == 2
         assert history[-1]["total_tokens"] == 180
         assert all(item["total_tokens"] == 0 for item in history[:-1])
+    finally:
+        with SessionLocal() as session:
+            session.execute(delete(Organization).where(Organization.id == organization_id))
+            session.commit()
+
+
+def test_daily_token_budget_reserves_reconciles_and_releases() -> None:
+    suffix = uuid.uuid4().hex[:10]
+    registration = client.post(
+        "/api/v1/auth/register",
+        json={
+            "organization_name": "Limite diário de tokens",
+            "organization_slug": f"ai-token-limit-{suffix}",
+            "admin_name": "Administrador",
+            "admin_email": f"ai-token-limit-{suffix}@example.com",
+            "password": "senha-segura-123",
+        },
+    )
+    organization_id = uuid.UUID(registration.json()["organization"]["id"])
+    try:
+        with SessionLocal() as session:
+            first = reserve_paid_ai_request(
+                session,
+                organization_id=organization_id,
+                daily_limit=10,
+                daily_token_limit=1_000,
+                token_reservation=600,
+            )
+            session.commit()
+            blocked = reserve_paid_ai_request(
+                session,
+                organization_id=organization_id,
+                daily_limit=10,
+                daily_token_limit=1_000,
+                token_reservation=500,
+            )
+            session.commit()
+            record_paid_ai_tokens(
+                session,
+                organization_id=organization_id,
+                input_tokens=120,
+                output_tokens=30,
+                token_reservation=600,
+            )
+            session.commit()
+            second = reserve_paid_ai_request(
+                session,
+                organization_id=organization_id,
+                daily_limit=10,
+                daily_token_limit=1_000,
+                token_reservation=800,
+            )
+            session.commit()
+            release_ai_token_reservation(
+                session,
+                organization_id=organization_id,
+                token_reservation=800,
+            )
+            session.commit()
+            usage = session.get(
+                AIUsageDaily, (organization_id, datetime.now(UTC).date())
+            )
+            assert (first, blocked, second) == (True, False, True)
+            assert usage.request_count == 2
+            assert usage.input_tokens == 120
+            assert usage.output_tokens == 30
+            assert usage.reserved_tokens == 0
     finally:
         with SessionLocal() as session:
             session.execute(delete(Organization).where(Organization.id == organization_id))

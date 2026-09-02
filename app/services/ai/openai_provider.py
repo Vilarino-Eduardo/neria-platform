@@ -3,6 +3,8 @@ from pydantic import BaseModel, Field
 
 from app.services.ai.contracts import AIProvider, AIRequest, AIResult
 
+DEFAULT_MAX_OUTPUT_TOKENS = 600
+
 
 class OpenAIAnswer(BaseModel):
     answer: str = Field(min_length=1, max_length=4000)
@@ -16,7 +18,7 @@ class OpenAIResponsesProvider(AIProvider):
         *,
         api_key: str,
         model: str,
-        max_output_tokens: int = 600,
+        max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
     ) -> None:
         if not 64 <= max_output_tokens <= 600:
             raise ValueError("max_output_tokens deve estar entre 64 e 600.")

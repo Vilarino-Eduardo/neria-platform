@@ -119,8 +119,15 @@ def simulate_ai_response(
         AIUsageDaily, (current_user.organization_id, datetime.now(UTC).date())
     )
     daily_limit = subscription.ai_daily_request_limit if subscription else 0
+    daily_token_limit = subscription.ai_daily_token_limit if subscription else 0
     used = usage.request_count if usage else 0
-    decision = decide_ai_route(knowledge, quota_available=used < daily_limit)
+    used_tokens = (
+        usage.input_tokens + usage.output_tokens + usage.reserved_tokens if usage else 0
+    )
+    decision = decide_ai_route(
+        knowledge,
+        quota_available=used < daily_limit and used_tokens < daily_token_limit,
+    )
     confidence = min(95, round(55 + knowledge[0].score * 8)) if knowledge else 0
     if decision.route == AIRoute.LOCAL:
         confidence = 100
@@ -193,14 +200,22 @@ def get_ai_metrics(
         )
     )
     daily_limit = subscription.ai_daily_request_limit if subscription else 0
+    daily_token_limit = subscription.ai_daily_token_limit if subscription else 0
     daily_usage = session.get(
         AIUsageDaily, (current_user.organization_id, datetime.now(UTC).date())
     )
     paid_requests_today = daily_usage.request_count if daily_usage else 0
     daily_input_tokens = daily_usage.input_tokens if daily_usage else 0
     daily_output_tokens = daily_usage.output_tokens if daily_usage else 0
+    daily_reserved_tokens = daily_usage.reserved_tokens if daily_usage else 0
     daily_quota_percent, daily_quota_status = ai_quota_status(
         paid_requests_today, daily_limit
+    )
+    daily_committed_tokens = (
+        daily_input_tokens + daily_output_tokens + daily_reserved_tokens
+    )
+    daily_token_quota_percent, daily_token_quota_status = ai_quota_status(
+        daily_committed_tokens, daily_token_limit
     )
     today = datetime.now(UTC).date()
     usage_start = today - timedelta(days=29)
@@ -248,6 +263,11 @@ def get_ai_metrics(
         daily_input_tokens=daily_input_tokens,
         daily_output_tokens=daily_output_tokens,
         daily_total_tokens=daily_input_tokens + daily_output_tokens,
+        daily_reserved_tokens=daily_reserved_tokens,
+        daily_token_limit=daily_token_limit,
+        daily_tokens_remaining=max(0, daily_token_limit - daily_committed_tokens),
+        daily_token_quota_percent=daily_token_quota_percent,
+        daily_token_quota_status=daily_token_quota_status,
         daily_usage=usage_history,
     )
 

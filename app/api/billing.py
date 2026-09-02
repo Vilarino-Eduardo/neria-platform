@@ -23,6 +23,7 @@ def subscription_response(subscription: Subscription, max_users: int) -> dict:
         "current_period_ends_at": subscription.current_period_ends_at,
         "max_users": max_users,
         "ai_daily_request_limit": subscription.ai_daily_request_limit,
+        "ai_daily_token_limit": subscription.ai_daily_token_limit,
     }
 
 

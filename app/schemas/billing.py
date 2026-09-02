@@ -17,6 +17,7 @@ class SubscriptionResponse(BaseModel):
     current_period_ends_at: datetime | None
     max_users: int
     ai_daily_request_limit: int
+    ai_daily_token_limit: int
 
 
 class ManualSubscriptionUpdate(BaseModel):
@@ -25,3 +26,4 @@ class ManualSubscriptionUpdate(BaseModel):
     current_period_ends_at: datetime | None = None
     notes: str | None = Field(default=None, max_length=2000)
     ai_daily_request_limit: int | None = Field(default=None, ge=0, le=100_000)
+    ai_daily_token_limit: int | None = Field(default=None, ge=0, le=100_000_000)

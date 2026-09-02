@@ -18,10 +18,18 @@ from app.models.core import (
     Subscription,
 )
 from app.services.ai.context import build_ai_request
-from app.services.ai.openai_provider import OpenAIResponsesProvider
+from app.services.ai.openai_provider import (
+    DEFAULT_MAX_OUTPUT_TOKENS,
+    OpenAIResponsesProvider,
+)
 from app.services.ai.retrieval import LexicalKnowledgeRetriever
 from app.services.ai.routing import AIRoute, decide_ai_route
-from app.services.ai.usage import record_paid_ai_tokens, reserve_paid_ai_request
+from app.services.ai.usage import (
+    estimate_token_reservation,
+    record_paid_ai_tokens,
+    release_ai_token_reservation,
+    reserve_paid_ai_request,
+)
 from app.services.conversation_assignment import assign_conversation_if_needed
 from app.tasks.celery_app import celery_app
 from app.tasks.whatsapp import enqueue_outbound_message
@@ -147,10 +155,17 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             )
         )
         daily_limit = subscription.ai_daily_request_limit if subscription else 0
+        daily_token_limit = subscription.ai_daily_token_limit if subscription else 0
+        token_reservation = estimate_token_reservation(
+            request,
+            max_output_tokens=DEFAULT_MAX_OUTPUT_TOKENS,
+        )
         if not reserve_paid_ai_request(
             session,
             organization_id=input_message.organization_id,
             daily_limit=daily_limit,
+            daily_token_limit=daily_token_limit,
+            token_reservation=token_reservation,
         ):
             quota_decision = decide_ai_route(request.knowledge, quota_available=False)
             output_message = Message(
@@ -219,6 +234,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 organization_id=input_message.organization_id,
                 input_tokens=result.input_tokens,
                 output_tokens=result.output_tokens,
+                token_reservation=token_reservation,
             )
             session.commit()
             enqueue_outbound_message(str(output_message.id))
@@ -227,6 +243,11 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             failed_run = session.get(AIRun, run.id)
             failed_conversation = session.get(Conversation, conversation.id)
             if failed_run and failed_conversation:
+                release_ai_token_reservation(
+                    session,
+                    organization_id=input_message.organization_id,
+                    token_reservation=token_reservation,
+                )
                 failed_run.status = AIRunStatus.FAILED
                 failed_run.error = str(exc)[:2000]
                 failed_run.latency_ms = int((time.perf_counter() - started_at) * 1000)

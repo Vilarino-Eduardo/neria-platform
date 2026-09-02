@@ -38,3 +38,7 @@ persistência e fila de saída — sem enviar nada à Meta:
 
 A empresa e os dados usados nessa prova são temporários e removidos ao final, inclusive em caso de
 falha.
+
+O consumo real é protegido por dois limites diários por empresa: quantidade de chamadas e tokens.
+O padrão inicial é 50 chamadas e 100.000 tokens; ambos podem ser reduzidos pela administração do
+plano sem alterar o código.

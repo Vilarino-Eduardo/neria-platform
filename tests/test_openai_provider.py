@@ -3,8 +3,9 @@ from unittest.mock import Mock
 
 import pytest
 
-from app.services.ai.contracts import AIMessage, AIRequest
+from app.services.ai.contracts import AIMessage, AIRequest, RetrievedKnowledge
 from app.services.ai.openai_provider import OpenAIAnswer, OpenAIResponsesProvider
+from app.services.ai.usage import estimate_token_reservation
 
 
 def test_provider_rejects_unsafe_output_limits() -> None:
@@ -45,3 +46,32 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
     assert result.input_tokens == 20
     assert result.output_tokens == 30
     assert parse.call_args.kwargs["max_output_tokens"] == 300
+
+
+def test_token_reservation_is_conservative_for_complete_request() -> None:
+    request = AIRequest(
+        system_instructions="Responda apenas com a fonte.",
+        messages=[AIMessage(role="user", content="Qual é o prazo?")],
+        knowledge=[
+            RetrievedKnowledge(
+                chunk_id="test",
+                source_title="Política",
+                content="Trocas em até sete dias.",
+                score=1,
+            )
+        ],
+    )
+
+    source_bytes = sum(
+        len(value.encode("utf-8"))
+        for value in (
+            request.system_instructions,
+            "user",
+            request.messages[0].content,
+            request.knowledge[0].source_title,
+            request.knowledge[0].content,
+        )
+    )
+    assert estimate_token_reservation(request, max_output_tokens=600) == (
+        source_bytes + 2_600
+    )
