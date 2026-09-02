@@ -20,6 +20,7 @@ from app.models.core import (
     Organization,
     WhatsAppAccount,
 )
+from app.services.ai.context import PROMPT_VERSION
 from app.services.ai.contracts import AIResult
 from app.services.ai.retrieval import relevance_score
 from app.tasks.ai import generate_ai_reply
@@ -115,7 +116,7 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
                     conversation_id=conversation.id,
                     input_message_id=ai_input.id,
                     status=AIRunStatus.PENDING,
-                    prompt_version="customer-service-v1",
+                    prompt_version=PROMPT_VERSION,
                 )
             )
             configuration_record = session.scalar(
@@ -156,6 +157,7 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
             assert generated_run.status == AIRunStatus.COMPLETED
             assert generated_run.confidence == 92
             assert generated_run.model == "gpt-test"
+            assert generated_run.prompt_version == PROMPT_VERSION
             assert generated_message.body == "Atendemos somente de segunda a sexta."
 
         messages = client.get(

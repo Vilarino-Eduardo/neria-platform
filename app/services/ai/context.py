@@ -12,6 +12,8 @@ from app.services.ai.contracts import (
 )
 from app.services.ai.retrieval import relevance_score
 
+PROMPT_VERSION = "customer-service-v2"
+
 BASE_RULES = """Você é a assistente de atendimento da empresa.
 Responda apenas com informações fornecidas no perfil, na base de conhecimento ou na conversa.
 Não invente preços, prazos, políticas ou disponibilidade.

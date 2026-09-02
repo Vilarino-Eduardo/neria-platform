@@ -17,7 +17,7 @@ from app.models.core import (
     MessageType,
     Subscription,
 )
-from app.services.ai.context import build_ai_request
+from app.services.ai.context import PROMPT_VERSION, build_ai_request
 from app.services.ai.openai_provider import (
     DEFAULT_MAX_OUTPUT_TOKENS,
     OpenAIResponsesProvider,
@@ -33,8 +33,6 @@ from app.services.ai.usage import (
 from app.services.conversation_assignment import assign_conversation_if_needed
 from app.tasks.celery_app import celery_app
 from app.tasks.whatsapp import enqueue_outbound_message
-
-PROMPT_VERSION = "customer-service-v1"
 
 
 @celery_app.task(bind=True, name="ai.generate_reply", max_retries=0)
