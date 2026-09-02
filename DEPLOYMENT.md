@@ -8,7 +8,7 @@
 
 ## Serviços no Railway
 
-Crie um projeto com PostgreSQL e Redis e conecte duas instâncias deste repositório:
+Crie um projeto com PostgreSQL e Redis e conecte três instâncias deste repositório:
 
 1. **neria-web**
    - Start command: deixe o `CMD` do Dockerfile.
@@ -17,13 +17,18 @@ Crie um projeto com PostgreSQL e Redis e conecte duas instâncias deste reposit�
 2. **neria-worker**
    - Start command: `celery -A app.tasks.celery_app.celery_app worker --loglevel=INFO`.
    - Sem domínio público e sem healthcheck HTTP.
+3. **neria-beat**
+   - Start command: `celery -A app.tasks.celery_app.celery_app beat --loglevel=INFO`.
+   - Execute apenas uma instância para evitar agendamentos duplicados.
+
+Localmente, `docker compose --profile app up --build` inicia migração, API, worker e beat.
 
 O Railway detecta automaticamente o `Dockerfile`. Não utilize `railway.toml`: o formato está
 descontinuado para novos serviços.
 
 ## Variáveis obrigatórias
 
-Configure nos dois serviços:
+Configure nos três serviços:
 
 - `ENVIRONMENT=production`
 - `DEBUG=false`

@@ -1,4 +1,100 @@
 services:
+  migrate:
+    profiles: ["app"]
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    env_file:
+      - path: .env
+        required: false
+    environment: &app_environment
+      DATABASE_URL: postgresql+psycopg://neria:neria@postgres:5432/neria
+      REDIS_URL: redis://redis:6379/0
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_USE_TLS: "false"
+      PASSWORD_RESET_URL: http://localhost:8000/?reset_token={token}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    profiles: ["app"]
+    build: .
+    init: true
+    env_file:
+      - path: .env
+        required: false
+    environment: *app_environment
+    ports:
+      - "8000:8000"
+    volumes:
+      - neria_storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health/ready')"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+  worker:
+    profiles: ["app"]
+    build: .
+    init: true
+    command:
+      - celery
+      - -A
+      - app.tasks.celery_app.celery_app
+      - worker
+      - --loglevel=INFO
+      - --concurrency=2
+    env_file:
+      - path: .env
+        required: false
+    environment: *app_environment
+    volumes:
+      - neria_storage:/app/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    profiles: ["app"]
+    build: .
+    init: true
+    command:
+      - celery
+      - -A
+      - app.tasks.celery_app.celery_app
+      - beat
+      - --loglevel=INFO
+      - --schedule=/tmp/celerybeat-schedule
+    env_file:
+      - path: .env
+        required: false
+    environment: *app_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
   postgres:
     image: postgres:17-alpine
     environment:
@@ -68,3 +164,4 @@ volumes:
   redis_data:
   minio_data:
   mailpit_data:
+  neria_storage:
