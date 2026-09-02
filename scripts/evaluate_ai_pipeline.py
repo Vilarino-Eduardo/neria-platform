@@ -155,6 +155,7 @@ def main() -> int:
                 "status": run.status.value,
                 "knowledge_chunks_retrieved": len(run.retrieved_chunk_ids),
                 "confidence": run.confidence,
+                "source_ids": output.raw_payload.get("source_ids", []) if output else [],
                 "input_tokens": run.input_tokens,
                 "output_tokens": run.output_tokens,
                 "latency_ms": run.latency_ms,

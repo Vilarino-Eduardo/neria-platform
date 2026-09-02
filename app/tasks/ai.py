@@ -216,7 +216,10 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 message_type=MessageType.TEXT,
                 status=MessageStatus.QUEUED,
                 body=body,
-                raw_payload={"ai_run_id": str(run.id)},
+                raw_payload={
+                    "ai_run_id": str(run.id),
+                    "source_ids": list(result.source_ids),
+                },
             )
             session.add(output_message)
             session.flush()

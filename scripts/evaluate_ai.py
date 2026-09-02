@@ -179,6 +179,7 @@ def main() -> int:
                 "answer": result.content,
                 "confidence": result.confidence,
                 "should_handoff": result.should_handoff,
+                "source_ids": list(result.source_ids),
                 "input_tokens": result.input_tokens,
                 "output_tokens": result.output_tokens,
                 "latency_ms": round((time.perf_counter() - started_at) * 1000),

@@ -30,6 +30,7 @@ class AIResult:
     provider: str
     model: str
     should_handoff: bool = False
+    source_ids: tuple[str, ...] = ()
     input_tokens: int | None = None
     output_tokens: int | None = None
 

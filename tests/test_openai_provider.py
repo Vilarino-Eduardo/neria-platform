@@ -35,6 +35,7 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
                 answer="Atendimento das 9h às 18h.",
                 confidence=95,
                 should_handoff=False,
+                source_ids=["hours-source"],
             ),
             usage=SimpleNamespace(input_tokens=20, output_tokens=30),
         )
@@ -45,6 +46,14 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
         AIRequest(
             system_instructions="Responda com base no contexto.",
             messages=[AIMessage(role="user", content="Qual é o horário?")],
+            knowledge=[
+                RetrievedKnowledge(
+                    chunk_id="hours-source",
+                    source_title="Horários",
+                    content="Atendimento das 9h às 18h.",
+                    score=1,
+                )
+            ],
         )
     )
 
@@ -52,7 +61,47 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
     assert result.input_tokens == 20
     assert result.output_tokens == 30
     assert result.model == "offline-test-2026-09-02"
+    assert result.should_handoff is False
+    assert result.source_ids == ("hours-source",)
     assert parse.call_args.kwargs["max_output_tokens"] == 300
+
+
+def test_provider_forces_handoff_when_citation_is_not_retrieved() -> None:
+    provider = OpenAIResponsesProvider(api_key="offline-test-key", model="offline-test")
+    provider.client = SimpleNamespace(
+        responses=SimpleNamespace(
+            parse=Mock(
+                return_value=SimpleNamespace(
+                    model="offline-test",
+                    output_parsed=OpenAIAnswer(
+                        answer="A troca pode ser feita em trinta dias.",
+                        confidence=99,
+                        should_handoff=False,
+                        source_ids=["invented-source"],
+                    ),
+                    usage=SimpleNamespace(input_tokens=20, output_tokens=30),
+                )
+            )
+        )
+    )
+
+    result = provider.generate(
+        AIRequest(
+            system_instructions="Não invente informações.",
+            messages=[AIMessage(role="user", content="Qual é o prazo?")],
+            knowledge=[
+                RetrievedKnowledge(
+                    chunk_id="real-source",
+                    source_title="Trocas",
+                    content="Trocas em sete dias.",
+                    score=1,
+                )
+            ],
+        )
+    )
+
+    assert result.should_handoff is True
+    assert result.source_ids == ()
 
 
 def test_token_reservation_is_conservative_for_complete_request() -> None:
