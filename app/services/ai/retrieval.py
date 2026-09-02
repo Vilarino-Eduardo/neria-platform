@@ -11,20 +11,30 @@ from app.services.ai.contracts import RetrievedKnowledge
 
 STOP_WORDS = {
     "a", "ao", "as", "com", "como", "da", "das", "de", "do", "dos", "e", "em",
-    "eu", "o", "os", "para", "por", "qual", "quais", "quanta", "quantas", "quanto", "quantos",
-    "que", "tenho", "um", "uma", "voces",
+    "consigo", "eu", "meu", "minha", "o", "os", "para", "por", "preciso", "qual",
+    "quais", "quanta", "quantas", "quanto", "quantos", "que", "quero", "tenho", "um",
+    "uma", "voces",
 }
 
 SYNONYM_GROUPS = {
+    "agendamento": {
+        "agenda", "agendamento", "agendar", "marcar", "remarcar", "reagendar",
+        "reagendamento", "reserva", "reservar",
+    },
+    "cancelamento": {"cancelamento", "cancelar", "desmarcar"},
+    "disponibilidade": {"disponibilidade", "disponivel", "estoque"},
     "endereco": {"endereco", "localizacao", "local", "onde"},
     "entrega": {"entrega", "envio", "frete", "transportadora"},
     "horario": {
         "abre", "abrem", "aberto", "fecha", "fecham", "funcionamento", "horario",
         "horas", "expediente",
     },
-    "pagamento": {"pagamento", "pagar", "pix", "cartao", "boleto"},
+    "pagamento": {
+        "boleto", "cartao", "pagamento", "pagar", "parcela", "parcelamento",
+        "parcelar", "pix",
+    },
     "prazo": {"prazo", "tempo", "periodo", "dias"},
-    "preco": {"preco", "valor", "custo"},
+    "preco": {"custo", "investimento", "orcamento", "orcar", "preco", "valor"},
     "promocao": {"promocao", "desconto", "oferta"},
     "troca": {"troca", "trocar", "devolucao", "devolver", "substituicao"},
 }
