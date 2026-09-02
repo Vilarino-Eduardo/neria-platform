@@ -1,9 +1,17 @@
+from types import SimpleNamespace
+from unittest.mock import Mock, patch
+
 import pytest
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
-from app.application import app, create_application, validate_production_settings
+from app.application import (
+    app,
+    close_runtime_resources,
+    create_application,
+    validate_production_settings,
+)
 from app.core.settings import Settings
 
 client = TestClient(app)
@@ -79,6 +87,21 @@ def test_transient_database_failure_returns_safe_503() -> None:
     assert response.headers["Retry-After"] == "5"
     assert response.headers["X-Request-ID"] == "database-failure-test"
     assert "connection lost" not in response.text
+
+
+def test_shutdown_closes_redis_even_if_database_disposal_fails() -> None:
+    redis_client = Mock()
+    with (
+        patch("app.application.engine.dispose", side_effect=RuntimeError("db failure")),
+        patch("app.application.get_rate_limit_redis") as get_redis,
+    ):
+        get_redis.cache_info.return_value = SimpleNamespace(currsize=1)
+        get_redis.return_value = redis_client
+
+        close_runtime_resources()
+
+    redis_client.close.assert_called_once_with()
+    get_redis.cache_clear.assert_called_once_with()
 
 
 def test_production_rejects_default_secrets() -> None:

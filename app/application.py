@@ -3,6 +3,8 @@ import logging
 import re
 import time
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -16,6 +18,8 @@ from sqlalchemy.exc import TimeoutError as SATimeoutError
 from app.api.router import api_router
 from app.core.logging import configure_logging
 from app.core.settings import Settings, get_settings
+from app.database.session import engine
+from app.services.rate_limit import get_rate_limit_redis
 
 logger = logging.getLogger("neria.http")
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
@@ -28,6 +32,27 @@ PLACEHOLDER_MARKERS = (
     "replace-me",
     "your-",
 )
+
+
+def close_runtime_resources() -> None:
+    try:
+        engine.dispose()
+    except Exception:
+        logger.exception("database_pool_shutdown_failed")
+
+    try:
+        if get_rate_limit_redis.cache_info().currsize:
+            get_rate_limit_redis().close()
+    except Exception:
+        logger.exception("redis_shutdown_failed")
+    finally:
+        get_rate_limit_redis.cache_clear()
+
+
+@asynccontextmanager
+async def application_lifespan(application: FastAPI) -> AsyncIterator[None]:
+    yield
+    close_runtime_resources()
 
 
 def is_placeholder(value: str | None) -> bool:
@@ -89,6 +114,7 @@ def create_application(settings: Settings | None = None) -> FastAPI:
         docs_url="/docs" if expose_api_documentation else None,
         redoc_url="/redoc" if expose_api_documentation else None,
         openapi_url="/openapi.json" if expose_api_documentation else None,
+        lifespan=application_lifespan,
     )
 
     async def database_unavailable(request, exception) -> JSONResponse:

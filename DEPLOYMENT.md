@@ -52,6 +52,7 @@ Novas senhas exigem 12 a 128 caracteres e padrões comuns ou repetitivos são re
 Conflitos simultâneos no cadastro público são revertidos e retornam `409`, sem deixar transações quebradas.
 O mesmo tratamento centralizado protege a criação de usuários e contatos duplicados.
 Falhas transitórias do banco retornam `503` e `Retry-After`, configurável por `DATABASE_RETRY_AFTER_SECONDS`.
+No encerramento da API, o pool do banco e a conexão Redis são liberados de forma controlada.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 
