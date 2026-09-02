@@ -67,6 +67,17 @@ class AIDailyUsagePoint(BaseModel):
     total_tokens: int
 
 
+class AIPromptVersionMetrics(BaseModel):
+    prompt_version: str
+    total_runs: int
+    completed_runs: int
+    escalated_runs: int
+    failed_runs: int
+    average_confidence: int | None
+    helpful_feedback: int
+    correction_feedback: int
+
+
 class AIMetricsResponse(BaseModel):
     period_days: int
     total_runs: int
@@ -91,6 +102,7 @@ class AIMetricsResponse(BaseModel):
     daily_token_quota_percent: int
     daily_token_quota_status: str
     daily_usage: list[AIDailyUsagePoint]
+    prompt_versions: list[AIPromptVersionMetrics]
 
 
 class AIFeedbackCreate(BaseModel):

@@ -187,6 +187,14 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
         assert metrics.json()["completed_runs"] == 2
         assert metrics.json()["average_confidence"] == 92
         assert metrics.json()["correction_feedback"] == 1
+        version_metrics = {
+            item["prompt_version"]: item
+            for item in metrics.json()["prompt_versions"]
+        }
+        assert version_metrics[PROMPT_VERSION]["completed_runs"] == 1
+        assert version_metrics[PROMPT_VERSION]["average_confidence"] == 92
+        assert version_metrics["v1"]["completed_runs"] == 1
+        assert version_metrics["v1"]["correction_feedback"] == 1
 
         suggestions = client.get("/api/v1/ai/knowledge-suggestions", headers=headers)
         assert suggestions.status_code == 200

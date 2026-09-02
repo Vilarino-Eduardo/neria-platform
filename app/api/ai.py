@@ -245,6 +245,74 @@ def get_ai_metrics(
                 "total_tokens": input_tokens + output_tokens,
             }
         )
+    version_run_rows = session.execute(
+        select(
+            AIRun.prompt_version,
+            AIRun.status,
+            func.count(AIRun.id),
+            func.avg(AIRun.confidence),
+            func.count(AIRun.confidence),
+        )
+        .where(
+            AIRun.organization_id == current_user.organization_id,
+            AIRun.created_at >= since,
+        )
+        .group_by(AIRun.prompt_version, AIRun.status)
+    ).all()
+    version_feedback_rows = session.execute(
+        select(
+            AIRun.prompt_version,
+            AIFeedback.rating,
+            func.count(AIFeedback.id),
+        )
+        .join(AIRun, AIRun.id == AIFeedback.ai_run_id)
+        .where(
+            AIFeedback.organization_id == current_user.organization_id,
+            AIFeedback.created_at >= since,
+        )
+        .group_by(AIRun.prompt_version, AIFeedback.rating)
+    ).all()
+    versions: dict[str, dict] = {}
+    for prompt_version, status, count, confidence, confidence_count in version_run_rows:
+        metrics = versions.setdefault(
+            prompt_version,
+            {
+                "prompt_version": prompt_version,
+                "total_runs": 0,
+                "completed_runs": 0,
+                "escalated_runs": 0,
+                "failed_runs": 0,
+                "confidence_total": 0.0,
+                "confidence_count": 0,
+                "helpful_feedback": 0,
+                "correction_feedback": 0,
+            },
+        )
+        metrics["total_runs"] += count
+        metrics[f"{status.value}_runs"] = count
+        if confidence is not None:
+            metrics["confidence_total"] += float(confidence) * confidence_count
+            metrics["confidence_count"] += confidence_count
+    for prompt_version, rating, count in version_feedback_rows:
+        metrics = versions.get(prompt_version)
+        if metrics is not None:
+            key = (
+                "helpful_feedback"
+                if rating == AIFeedbackRating.HELPFUL
+                else "correction_feedback"
+            )
+            metrics[key] = count
+    prompt_versions = []
+    for metrics in versions.values():
+        confidence_count = metrics.pop("confidence_count")
+        confidence_total = metrics.pop("confidence_total")
+        metrics["average_confidence"] = (
+            round(confidence_total / confidence_count) if confidence_count else None
+        )
+        prompt_versions.append(metrics)
+    prompt_versions.sort(
+        key=lambda item: (item["total_runs"], item["prompt_version"]), reverse=True
+    )
     return AIMetricsResponse(
         period_days=30,
         total_runs=total,
@@ -269,6 +337,7 @@ def get_ai_metrics(
         daily_token_quota_percent=daily_token_quota_percent,
         daily_token_quota_status=daily_token_quota_status,
         daily_usage=usage_history,
+        prompt_versions=prompt_versions,
     )
 
 
