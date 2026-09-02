@@ -54,7 +54,7 @@ class OpenAIResponsesProvider(AIProvider):
             confidence=parsed.confidence,
             should_handoff=parsed.should_handoff,
             provider="openai",
-            model=self.model,
+            model=response.model or self.model,
             input_tokens=usage.input_tokens if usage else None,
             output_tokens=usage.output_tokens if usage else None,
         )

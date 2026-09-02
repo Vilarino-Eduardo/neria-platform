@@ -155,6 +155,7 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
             generated_message = session.get(Message, generated_run.output_message_id)
             assert generated_run.status == AIRunStatus.COMPLETED
             assert generated_run.confidence == 92
+            assert generated_run.model == "gpt-test"
             assert generated_message.body == "Atendemos somente de segunda a sexta."
 
         messages = client.get(

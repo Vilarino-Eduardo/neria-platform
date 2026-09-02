@@ -225,6 +225,8 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 assign_conversation_if_needed(session, conversation)
             run.output_message_id = output_message.id
             run.status = AIRunStatus.ESCALATED if should_handoff else AIRunStatus.COMPLETED
+            run.provider = result.provider
+            run.model = result.model
             run.confidence = result.confidence
             run.latency_ms = int((time.perf_counter() - started_at) * 1000)
             run.input_tokens = result.input_tokens

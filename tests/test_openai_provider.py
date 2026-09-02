@@ -25,6 +25,7 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
     )
     parse = Mock(
         return_value=SimpleNamespace(
+            model="offline-test-2026-09-02",
             output_parsed=OpenAIAnswer(
                 answer="Atendimento das 9h às 18h.",
                 confidence=95,
@@ -45,6 +46,7 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
     assert result.content == "Atendimento das 9h às 18h."
     assert result.input_tokens == 20
     assert result.output_tokens == 30
+    assert result.model == "offline-test-2026-09-02"
     assert parse.call_args.kwargs["max_output_tokens"] == 300
 
 
