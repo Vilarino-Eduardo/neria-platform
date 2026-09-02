@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     database_retry_after_seconds: int = 5
     redis_url: str = "redis://localhost:6379/0"
     trusted_proxy_networks: str = ""
+    max_request_body_bytes: int = 12 * 1024 * 1024
     knowledge_storage_path: str = "storage/knowledge"
     knowledge_max_file_bytes: int = 10 * 1024 * 1024
     object_storage_backend: str = "local"

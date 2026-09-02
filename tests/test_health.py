@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 from cryptography.fernet import Fernet
+from fastapi import Request
 from fastapi.testclient import TestClient
 from sqlalchemy.exc import OperationalError
 
@@ -102,6 +103,44 @@ def test_shutdown_closes_redis_even_if_database_disposal_fails() -> None:
 
     redis_client.close.assert_called_once_with()
     get_redis.cache_clear.assert_called_once_with()
+
+
+def test_oversized_request_is_rejected_before_route_processing() -> None:
+    settings = Settings(_env_file=None, max_request_body_bytes=32)
+    isolated_app = create_application(settings)
+    route_called = False
+
+    @isolated_app.post("/test-request-size")
+    def accept_body() -> dict[str, bool]:
+        nonlocal route_called
+        route_called = True
+        return {"accepted": True}
+
+    response = TestClient(isolated_app).post(
+        "/test-request-size",
+        content=b"x" * 33,
+        headers={"Content-Type": "application/octet-stream"},
+    )
+
+    assert response.status_code == 413
+    assert response.json() == {"detail": "A requisição excede o tamanho permitido."}
+    assert route_called is False
+
+
+def test_oversized_streamed_request_cannot_bypass_limit() -> None:
+    isolated_app = create_application(Settings(_env_file=None, max_request_body_bytes=32))
+
+    @isolated_app.post("/test-streamed-request-size")
+    async def read_streamed_body(request: Request) -> dict[str, bool]:
+        await request.body()
+        return {"accepted": True}
+
+    response = TestClient(isolated_app).post(
+        "/test-streamed-request-size",
+        content=iter([b"x" * 20, b"y" * 20]),
+    )
+
+    assert response.status_code == 413
 
 
 def test_production_rejects_default_secrets() -> None:

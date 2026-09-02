@@ -17,6 +17,7 @@ from sqlalchemy.exc import TimeoutError as SATimeoutError
 
 from app.api.router import api_router
 from app.core.logging import configure_logging
+from app.core.request_limits import RequestSizeLimitMiddleware
 from app.core.settings import Settings, get_settings
 from app.database.session import engine
 from app.services.rate_limit import get_rate_limit_redis
@@ -199,6 +200,10 @@ def create_application(settings: Settings | None = None) -> FastAPI:
     def web_app() -> FileResponse:
         return FileResponse(web_directory / "index.html")
 
+    application.add_middleware(
+        RequestSizeLimitMiddleware,
+        max_bytes=settings.max_request_body_bytes,
+    )
     return application
 
 
