@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.core import AIFeedbackRating, KnowledgeSuggestionStatus
 
@@ -14,6 +14,16 @@ class AIConfigurationUpdate(BaseModel):
     history_message_limit: int | None = Field(default=None, ge=4, le=30)
     retrieval_limit: int | None = Field(default=None, ge=1, le=10)
     minimum_confidence: int | None = Field(default=None, ge=0, le=100)
+
+    @field_validator("tone")
+    @classmethod
+    def normalize_tone(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        normalized = " ".join(value.split())
+        if len(normalized) < 2:
+            raise ValueError("Informe um tom de voz válido.")
+        return normalized
 
 
 class AIConfigurationResponse(BaseModel):

@@ -98,9 +98,11 @@ def build_ai_request(
             f"Descrição: {profile.description or 'não informada'}.\n"
             f"Horário: {profile.opening_hours or 'não informado'}."
         )
+    tone = configuration.tone.strip() if configuration and configuration.tone else "cordial"
+    tone_context = f"\nTom de voz: {tone}."
     custom = f"\nInstruções adicionais: {configuration.instructions}" if configuration and configuration.instructions else ""
     return AIRequest(
-        system_instructions=f"{BASE_RULES}{company_context}{custom}",
+        system_instructions=f"{BASE_RULES}{company_context}{tone_context}{custom}",
         messages=[
             AIMessage(
                 role="user" if message.direction.value == "inbound" else "assistant",

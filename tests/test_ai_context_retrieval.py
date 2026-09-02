@@ -50,6 +50,7 @@ def test_context_memory_retrieval_and_tenant_isolation() -> None:
             json={
                 "history_message_limit": 4,
                 "retrieval_limit": 2,
+                "tone": "profissional e acolhedor",
                 "instructions": "Chame a empresa de Loja Azul.",
             },
         )
@@ -176,6 +177,7 @@ def test_context_memory_retrieval_and_tenant_isolation() -> None:
         assert "sete dias" in request.knowledge[0].content
         assert all("trinta dias" not in item.content for item in request.knowledge)
         assert "Empresa: Loja Azul" in request.system_instructions
+        assert "Tom de voz: profissional e acolhedor." in request.system_instructions
         assert "Chame a empresa de Loja Azul" in request.system_instructions
         profile_sources = [
             item for item in profile_request.knowledge if item.chunk_id.startswith("profile:")
