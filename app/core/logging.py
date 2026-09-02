@@ -6,6 +6,17 @@ from logging.handlers import QueueHandler, QueueListener
 
 _listener: QueueListener | None = None
 
+SENSITIVE_THIRD_PARTY_LOGGERS = (
+    "httpcore",
+    "httpx",
+    "httpx2",
+    "openai",
+)
+NOISY_THIRD_PARTY_LOGGERS = (
+    "asyncio",
+    "celery",
+)
+
 
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
@@ -36,3 +47,7 @@ def configure_logging(environment: str) -> None:
     root.handlers.clear()
     root.addHandler(QueueHandler(log_queue))
     root.setLevel(logging.DEBUG if environment == "development" else logging.INFO)
+    for logger_name in SENSITIVE_THIRD_PARTY_LOGGERS:
+        logging.getLogger(logger_name).setLevel(logging.WARNING)
+    for logger_name in NOISY_THIRD_PARTY_LOGGERS:
+        logging.getLogger(logger_name).setLevel(logging.INFO)
