@@ -40,7 +40,7 @@ from app.schemas.conversation import (
     MessageResponse,
 )
 from app.services.conversation_assignment import assign_conversation_if_needed
-from app.tasks.whatsapp import send_whatsapp_message
+from app.tasks.whatsapp import enqueue_outbound_message
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -556,7 +556,7 @@ def create_outbound_message(
             detail="A chave de idempotência já foi usada com outro conteúdo.",
         ) from None
     session.refresh(message)
-    send_whatsapp_message.delay(str(message.id))
+    enqueue_outbound_message(str(message.id))
     return message
 
 
@@ -602,5 +602,5 @@ def retry_failed_message(
     )
     session.commit()
     session.refresh(message)
-    send_whatsapp_message.delay(str(message.id))
+    enqueue_outbound_message(str(message.id))
     return message

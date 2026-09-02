@@ -24,4 +24,10 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,
     result_expires=3600,
     broker_transport_options={"visibility_timeout": 300},
+    beat_schedule={
+        "recover-pending-whatsapp-messages": {
+            "task": "whatsapp.recover_pending_messages",
+            "schedule": 30.0,
+        }
+    },
 )

@@ -19,7 +19,7 @@ from app.models.core import (
     WhatsAppTemplate,
     WhatsAppTemplateStatus,
 )
-from app.tasks.whatsapp import send_whatsapp_message
+from app.tasks.whatsapp import recover_pending_messages, send_whatsapp_message
 
 client = TestClient(app)
 
@@ -226,7 +226,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         )
         assert isolated_events.status_code == 404
 
-        with patch("app.api.conversations.send_whatsapp_message.delay") as enqueue:
+        with patch("app.api.conversations.enqueue_outbound_message") as enqueue:
             message_headers = {**headers, "Idempotency-Key": f"message-main-{suffix}"}
             message = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
@@ -251,6 +251,9 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         assert repeated_message.json()["id"] == message.json()["id"]
         assert conflicting_message.status_code == 409
         enqueue.assert_called_once_with(message.json()["id"])
+        with patch("app.tasks.whatsapp.send_whatsapp_message.delay") as recovery_enqueue:
+            assert recover_pending_messages.run() >= 1
+        recovery_enqueue.assert_any_call(message.json()["id"])
 
         team_dashboard = client.get("/api/v1/dashboard", headers=headers)
         assert team_dashboard.status_code == 200
@@ -299,8 +302,10 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         with patch(
             "app.tasks.whatsapp.MetaWhatsAppClient.send_message",
             return_value=f"wamid.outbound-{suffix}",
-        ):
+        ) as external_send:
             send_whatsapp_message.run(message.json()["id"])
+            send_whatsapp_message.run(message.json()["id"])
+        external_send.assert_called_once()
 
         sent_messages = client.get(
             f"/api/v1/conversations/{conversation_id}/messages", headers=headers
@@ -317,7 +322,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
             failed_message.delivery_error = "Falha temporária simulada"
             session.commit()
 
-        with patch("app.api.conversations.send_whatsapp_message.delay") as retry_enqueue:
+        with patch("app.api.conversations.enqueue_outbound_message") as retry_enqueue:
             retried = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages/{message.json()['id']}/retry",
                 headers=headers,
@@ -333,7 +338,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         assert inbox.json()[0]["last_message_body"] == "Olá, cliente!"
         assert inbox.json()[0]["sla_status"] is None
 
-        with patch("app.api.conversations.send_whatsapp_message.delay"):
+        with patch("app.api.conversations.enqueue_outbound_message"):
             media = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
                 headers={**headers, "Idempotency-Key": f"message-media-{suffix}"},
@@ -386,7 +391,7 @@ def test_conversation_message_ticket_and_tenant_isolation() -> None:
         )
         assert blocked.status_code == 409
 
-        with patch("app.api.conversations.send_whatsapp_message.delay"):
+        with patch("app.api.conversations.enqueue_outbound_message"):
             templated = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
                 headers={**headers, "Idempotency-Key": f"message-template-{suffix}"},

@@ -19,7 +19,7 @@ from app.models.core import (
 )
 from app.services.automation_engine import process_automation
 from app.tasks.ai import generate_ai_reply
-from app.tasks.whatsapp import send_whatsapp_message
+from app.tasks.whatsapp import enqueue_outbound_message
 
 
 def extract_message_body(message: dict) -> str | None:
@@ -75,7 +75,7 @@ def process_webhook_event(session: Session, event: WhatsAppWebhookEvent) -> None
         event.processed_at = datetime.now(UTC)
         session.commit()
         for message_id in queued_message_ids:
-            send_whatsapp_message.delay(str(message_id))
+            enqueue_outbound_message(str(message_id))
         for message_id in ai_message_ids:
             generate_ai_reply.delay(str(message_id))
     except Exception as exc:
@@ -178,6 +178,7 @@ def update_message_status(session: Session, payload: dict) -> None:
         return
     progression = {
         MessageStatus.QUEUED: 0,
+        MessageStatus.SENDING: 0,
         MessageStatus.SENT: 1,
         MessageStatus.DELIVERED: 2,
         MessageStatus.READ: 3,

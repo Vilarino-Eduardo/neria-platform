@@ -144,7 +144,7 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
                     model="gpt-test",
                 ),
             ),
-            patch("app.tasks.ai.send_whatsapp_message.delay") as enqueue,
+            patch("app.tasks.ai.enqueue_outbound_message") as enqueue,
         ):
             generate_ai_reply.run(ai_input_id)
         enqueue.assert_called_once()

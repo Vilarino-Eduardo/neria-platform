@@ -55,6 +55,7 @@ Falhas transitórias do banco retornam `503` e `Retry-After`, configurável por 
 No encerramento da API, o pool do banco e a conexão Redis são liberados de forma controlada.
 Requisições acima de `MAX_REQUEST_BODY_BYTES` (12 MB por padrão) são recusadas com `413`.
 Envios de mensagens exigem `Idempotency-Key`; repetições idênticas não são reenfileiradas.
+O Celery Beat recupera mensagens pendentes a cada 30 segundos; execute worker e beat em produção.
 Valores de exemplo como `change-this`, `development` ou `example` são recusados quando
 `ENVIRONMENT=production`; a aplicação não inicia com configuração incompleta ou insegura.
 

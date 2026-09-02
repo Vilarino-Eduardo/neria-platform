@@ -82,6 +82,7 @@ class MessageType(str, enum.Enum):
 class MessageStatus(str, enum.Enum):
     RECEIVED = "received"
     QUEUED = "queued"
+    SENDING = "sending"
     SENT = "sent"
     DELIVERED = "delivered"
     READ = "read"
@@ -698,6 +699,7 @@ class Message(Base):
     )
     delivery_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     delivery_error: Mapped[str | None] = mapped_column(Text)
+    delivery_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     body: Mapped[str | None] = mapped_column(Text)
     media_id: Mapped[str | None] = mapped_column(String(160))
     media_url: Mapped[str | None] = mapped_column(String(2000))

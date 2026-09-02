@@ -240,7 +240,7 @@ def test_ai_safety_matrix_without_external_calls(
                 ),
             ),
             provider_patch as provider_generate,
-            patch("app.tasks.ai.send_whatsapp_message.delay") as enqueue,
+            patch("app.tasks.ai.enqueue_outbound_message") as enqueue,
         ):
             generate_ai_reply.run(input_message_id)
 

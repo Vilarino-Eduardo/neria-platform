@@ -24,7 +24,7 @@ from app.services.ai.routing import AIRoute, decide_ai_route
 from app.services.ai.usage import record_paid_ai_tokens, reserve_paid_ai_request
 from app.services.conversation_assignment import assign_conversation_if_needed
 from app.tasks.celery_app import celery_app
-from app.tasks.whatsapp import send_whatsapp_message
+from app.tasks.whatsapp import enqueue_outbound_message
 
 PROMPT_VERSION = "customer-service-v1"
 
@@ -108,7 +108,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             run.input_tokens = 0
             run.output_tokens = 0
             session.commit()
-            send_whatsapp_message.delay(str(output_message.id))
+            enqueue_outbound_message(str(output_message.id))
             return
 
         if preflight.route == AIRoute.HANDOFF:
@@ -138,7 +138,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             run.input_tokens = 0
             run.output_tokens = 0
             session.commit()
-            send_whatsapp_message.delay(str(output_message.id))
+            enqueue_outbound_message(str(output_message.id))
             return
 
         subscription = session.scalar(
@@ -179,7 +179,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             run.input_tokens = 0
             run.output_tokens = 0
             session.commit()
-            send_whatsapp_message.delay(str(output_message.id))
+            enqueue_outbound_message(str(output_message.id))
             return
         session.commit()
 
@@ -221,7 +221,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 output_tokens=result.output_tokens,
             )
             session.commit()
-            send_whatsapp_message.delay(str(output_message.id))
+            enqueue_outbound_message(str(output_message.id))
         except Exception as exc:  # noqa: BLE001 - provider and network failures share fallback
             session.rollback()
             failed_run = session.get(AIRun, run.id)
@@ -245,4 +245,4 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 session.flush()
                 failed_run.output_message_id = fallback.id
                 session.commit()
-                send_whatsapp_message.delay(str(fallback.id))
+                enqueue_outbound_message(str(fallback.id))

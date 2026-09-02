@@ -176,7 +176,7 @@ def test_complete_pilot_acceptance_journey() -> None:
             incoming_payload(f"wamid.greeting.{suffix}", "Olá")
         )
         webhook_hashes.append(first_hash)
-        with patch("app.integrations.whatsapp.processor.send_whatsapp_message.delay"):
+        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
             received = client.post(
                 "/api/v1/webhooks/whatsapp",
                 content=first_body,
@@ -201,7 +201,7 @@ def test_complete_pilot_acceptance_journey() -> None:
             incoming_payload(f"wamid.handoff.{suffix}", "agent")
         )
         webhook_hashes.append(handoff_hash)
-        with patch("app.integrations.whatsapp.processor.send_whatsapp_message.delay"):
+        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
             handoff = client.post(
                 "/api/v1/webhooks/whatsapp",
                 content=handoff_body,
@@ -220,7 +220,7 @@ def test_complete_pilot_acceptance_journey() -> None:
             json={"subject": "Atendimento do piloto"},
         )
         assert ticket.status_code == 201
-        with patch("app.api.conversations.send_whatsapp_message.delay") as enqueue:
+        with patch("app.api.conversations.enqueue_outbound_message") as enqueue:
             human_reply = client.post(
                 f"/api/v1/conversations/{conversation_id}/messages",
                 headers={**headers, "Idempotency-Key": f"pilot-message-{suffix}"},

@@ -1,4 +1,15 @@
+from unittest.mock import patch
+
 from app.integrations.whatsapp.client import MetaWhatsAppClient
+from app.tasks.whatsapp import enqueue_outbound_message
+
+
+def test_enqueue_failure_leaves_message_for_periodic_recovery() -> None:
+    with patch(
+        "app.tasks.whatsapp.send_whatsapp_message.delay",
+        side_effect=ConnectionError("broker unavailable"),
+    ):
+        assert enqueue_outbound_message("message-id") is False
 
 
 def test_build_media_and_interactive_payloads() -> None:
