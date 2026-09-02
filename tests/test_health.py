@@ -1,6 +1,7 @@
 import pytest
 from cryptography.fernet import Fernet
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import OperationalError
 
 from app.application import app, create_application, validate_production_settings
 from app.core.settings import Settings
@@ -59,6 +60,25 @@ def test_liveness_and_readiness() -> None:
         "status": "ready",
         "components": {"database": "ok", "redis": "ok"},
     }
+
+
+def test_transient_database_failure_returns_safe_503() -> None:
+    isolated_app = create_application(Settings(_env_file=None))
+
+    @isolated_app.get("/test-database-failure")
+    def fail_database_query() -> None:
+        raise OperationalError("SELECT 1", {}, Exception("connection lost"))
+
+    isolated_client = TestClient(isolated_app)
+    response = isolated_client.get(
+        "/test-database-failure", headers={"X-Request-ID": "database-failure-test"}
+    )
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Banco de dados temporariamente indisponível."}
+    assert response.headers["Retry-After"] == "5"
+    assert response.headers["X-Request-ID"] == "database-failure-test"
+    assert "connection lost" not in response.text
 
 
 def test_production_rejects_default_secrets() -> None:

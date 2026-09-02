@@ -8,8 +8,10 @@ from urllib.parse import urlparse
 
 from cryptography.fernet import Fernet
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.exc import DisconnectionError, OperationalError
+from sqlalchemy.exc import TimeoutError as SATimeoutError
 
 from app.api.router import api_router
 from app.core.logging import configure_logging
@@ -88,6 +90,26 @@ def create_application(settings: Settings | None = None) -> FastAPI:
         redoc_url="/redoc" if expose_api_documentation else None,
         openapi_url="/openapi.json" if expose_api_documentation else None,
     )
+
+    async def database_unavailable(request, exception) -> JSONResponse:
+        logger.error(
+            "database_unavailable",
+            exc_info=exception,
+            extra={
+                "request_id": getattr(request.state, "request_id", None),
+                "method": request.method,
+                "path": request.url.path,
+            },
+        )
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Banco de dados temporariamente indisponível."},
+            headers={"Retry-After": str(settings.database_retry_after_seconds)},
+        )
+
+    for database_error in (OperationalError, DisconnectionError, SATimeoutError):
+        application.add_exception_handler(database_error, database_unavailable)
+
     application.include_router(api_router, prefix=settings.api_prefix)
 
     @application.middleware("http")
@@ -98,6 +120,7 @@ def create_application(settings: Settings | None = None) -> FastAPI:
             if REQUEST_ID_PATTERN.fullmatch(supplied_request_id)
             else uuid.uuid4().hex
         )
+        request.state.request_id = request_id
         started = time.perf_counter()
         try:
             response = await call_next(request)
