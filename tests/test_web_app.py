@@ -33,3 +33,5 @@ def test_web_application_is_served() -> None:
     assert "Selecione uma fonte" in javascript.text
     assert "daily_token_limit" in javascript.text
     assert "daily_token_quota_status" in javascript.text
+    assert 'id="ai-version-metrics"' in response.text
+    assert "renderAIPromptVersions" in javascript.text
