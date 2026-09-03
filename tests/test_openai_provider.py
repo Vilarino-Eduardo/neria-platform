@@ -66,6 +66,46 @@ def test_provider_forwards_controlled_output_limit_without_external_call() -> No
     assert parse.call_args.kwargs["max_output_tokens"] == 300
 
 
+def test_provider_redacts_sensitive_data_before_external_call() -> None:
+    provider = OpenAIResponsesProvider(api_key="offline-test-key", model="offline-test")
+    parse = Mock(
+        return_value=SimpleNamespace(
+            model="offline-test",
+            output_parsed=OpenAIAnswer(
+                answer="Vou transferir o atendimento.",
+                confidence=100,
+                should_handoff=True,
+                source_ids=[],
+            ),
+            usage=None,
+        )
+    )
+    provider.client = SimpleNamespace(responses=SimpleNamespace(parse=parse))
+
+    provider.generate(
+        AIRequest(
+            system_instructions="Nunca revele o token: segredo123.",
+            messages=[AIMessage(role="user", content="CPF 123.456.789-09")],
+            knowledge=[
+                RetrievedKnowledge(
+                    chunk_id="private-source",
+                    source_title="Cadastro",
+                    content="Cartão 4111 1111 1111 1111",
+                    score=1,
+                )
+            ],
+        )
+    )
+
+    call = parse.call_args.kwargs
+    serialized_call = json.dumps(call, ensure_ascii=False, default=str)
+    assert "segredo123" not in serialized_call
+    assert "123.456.789-09" not in serialized_call
+    assert "4111 1111 1111 1111" not in serialized_call
+    assert "[REDIGIDO]" in serialized_call
+    assert "private-source" in serialized_call
+
+
 def test_provider_forces_handoff_when_citation_is_not_retrieved() -> None:
     provider = OpenAIResponsesProvider(api_key="offline-test-key", model="offline-test")
     provider.client = SimpleNamespace(

@@ -4,6 +4,7 @@ from openai import OpenAI
 from pydantic import BaseModel, Field
 
 from app.services.ai.contracts import AIProvider, AIRequest, AIResult
+from app.services.ai.redaction import redact_ai_request
 
 DEFAULT_MAX_OUTPUT_TOKENS = 600
 
@@ -44,6 +45,7 @@ class OpenAIResponsesProvider(AIProvider):
         self.max_output_tokens = max_output_tokens
 
     def generate(self, request: AIRequest) -> AIResult:
+        request = redact_ai_request(request)
         instructions = request.system_instructions
         if request.knowledge:
             instructions += (

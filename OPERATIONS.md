@@ -26,6 +26,10 @@ PostgreSQL e Redis devem estar saudáveis antes de iniciar os processos. A API e
   `provider_unavailable`, `provider_rate_limited`, `provider_quota_exhausted`,
   `provider_authentication_failed`, `provider_request_rejected`, `provider_http_error` ou
   `provider_error`), nunca a mensagem bruta recebida do provedor.
+- Antes de qualquer chamada à OpenAI, a Neria mascara CPF formatado, números de cartão válidos,
+  CVV e credenciais explicitamente rotuladas. A conversa original permanece no banco para o
+  atendimento; somente a cópia enviada ao provedor é alterada. Essa barreira reduz exposição, mas
+  não substitui a orientação ao cliente para não enviar dados sensíveis pelo WhatsApp.
 - Webhooks falhos são reprocessados quando a Meta os repete.
 
 ## Mensagem não enviada
