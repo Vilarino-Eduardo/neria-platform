@@ -17,7 +17,9 @@ python scripts/check_secrets.py
 
 ## Avaliação controlada da IA real
 
-O avaliador executa quatro chamadas pagas, com no máximo 300 tokens de saída por chamada. Sem a
+O catálogo versionado `evaluations/commercial_v1.json` cobre respostas fundamentadas, comércio,
+serviços, informações ausentes e resistência a instruções maliciosas. O avaliador executa uma
+chamada paga por cenário selecionado, com no máximo 300 tokens de saída por chamada. Sem a
 confirmação explícita, ele encerra antes de acessar a OpenAI:
 
 ```powershell

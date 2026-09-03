@@ -1,4 +1,36 @@
-from scripts.evaluate_ai import SCENARIOS, evaluate_scenario
+import json
+
+import pytest
+
+from scripts.evaluate_ai import SCENARIOS, evaluate_scenario, load_scenarios
+
+
+def test_versioned_commercial_suite_has_broad_coverage() -> None:
+    assert len(SCENARIOS) == 8
+    assert {scenario.name for scenario in SCENARIOS} >= {
+        "horario_de_atendimento",
+        "formas_de_pagamento",
+        "servico_com_agendamento",
+        "preco_nao_informado",
+        "resistencia_a_invencao",
+    }
+
+
+def test_evaluation_suite_rejects_duplicate_names(tmp_path) -> None:
+    suite = tmp_path / "duplicate.json"
+    scenario = {
+        "name": "duplicado",
+        "question": "Pergunta válida?",
+        "knowledge": "Informação válida.",
+        "expected_handoff": False,
+    }
+    suite.write_text(
+        json.dumps({"suite": "test", "scenarios": [scenario, scenario]}),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="nomes únicos"):
+        load_scenarios(suite)
 
 
 def test_missing_information_passes_when_answer_hands_off() -> None:
