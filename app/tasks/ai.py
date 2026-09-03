@@ -18,6 +18,7 @@ from app.models.core import (
     Subscription,
 )
 from app.services.ai.context import PROMPT_VERSION, build_ai_request
+from app.services.ai.errors import safe_ai_error_code
 from app.services.ai.openai_provider import (
     DEFAULT_MAX_OUTPUT_TOKENS,
     OpenAIResponsesProvider,
@@ -264,7 +265,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                     token_reservation=token_reservation,
                 )
                 failed_run.status = AIRunStatus.FAILED
-                failed_run.error = str(exc)[:2000]
+                failed_run.error = safe_ai_error_code(exc)
                 failed_run.latency_ms = int((time.perf_counter() - started_at) * 1000)
                 failed_conversation.mode = ConversationMode.HUMAN
                 assign_conversation_if_needed(session, failed_conversation)

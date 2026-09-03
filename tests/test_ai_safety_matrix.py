@@ -284,6 +284,8 @@ def test_ai_safety_matrix_without_external_calls(
                 assert output.raw_payload["reason"] == "daily_ai_limit_reached"
                 assert run.provider == "local"
             if name == "provider_failure":
+                assert run.error == "provider_error"
+                assert "provider unavailable" not in run.error
                 usage = session.get(
                     AIUsageDaily,
                     (organization_id, datetime.now(UTC).date()),

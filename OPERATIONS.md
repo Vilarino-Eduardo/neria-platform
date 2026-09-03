@@ -19,6 +19,10 @@ PostgreSQL e Redis devem estar saudáveis antes de iniciar os processos. A API e
 - Cada worker reserva apenas uma tarefa por vez.
 - Envio ao WhatsApp possui até quatro repetições com espera progressiva.
 - Execuções pendentes da IA podem ser retomadas sem criar uma segunda resposta.
+- Falhas da IA registram apenas códigos seguros (`provider_timeout`,
+  `provider_unavailable`, `provider_rate_limited`, `provider_quota_exhausted`,
+  `provider_authentication_failed`, `provider_request_rejected`, `provider_http_error` ou
+  `provider_error`), nunca a mensagem bruta recebida do provedor.
 - Webhooks falhos são reprocessados quando a Meta os repete.
 
 ## Mensagem não enviada
