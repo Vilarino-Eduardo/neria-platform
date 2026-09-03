@@ -179,6 +179,7 @@ class MessageResponse(BaseModel):
     media_filename: str | None
     created_at: datetime
     ai_run_id: uuid.UUID | None = None
+    ai_source_titles: list[str] = Field(default_factory=list)
 
 
 class TicketCreate(BaseModel):

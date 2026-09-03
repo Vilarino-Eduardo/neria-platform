@@ -138,11 +138,12 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
             ),
             patch(
                 "app.tasks.ai.OpenAIResponsesProvider.generate",
-                return_value=AIResult(
+                side_effect=lambda request: AIResult(
                     content="Atendemos somente de segunda a sexta.",
                     confidence=92,
                     provider="openai",
                     model="gpt-test",
+                    source_ids=(request.knowledge[0].chunk_id,),
                 ),
             ),
             patch("app.tasks.ai.enqueue_outbound_message") as enqueue,
@@ -170,6 +171,7 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
             if item["body"] == "Atendemos somente de segunda a sexta."
         )
         assert generated_payload["ai_run_id"] == str(generated_run.id)
+        assert generated_payload["ai_source_titles"] == ["Horários de atendimento"]
 
         feedback = client.post(
             f"/api/v1/ai/runs/{run_id}/feedback",

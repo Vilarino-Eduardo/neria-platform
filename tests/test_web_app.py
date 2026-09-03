@@ -35,3 +35,4 @@ def test_web_application_is_served() -> None:
     assert "daily_token_quota_status" in javascript.text
     assert 'id="ai-version-metrics"' in response.text
     assert "renderAIPromptVersions" in javascript.text
+    assert "ai_source_titles" in javascript.text

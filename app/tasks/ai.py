@@ -101,6 +101,9 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                     "ai_run_id": str(run.id),
                     "local_response": True,
                     "reason": preflight.reason,
+                    "source_titles": list(
+                        dict.fromkeys(item.source_title for item in request.knowledge)
+                    ),
                 },
             )
             session.add(output_message)
@@ -207,6 +210,14 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 or result.confidence < configuration.minimum_confidence
             )
             body = configuration.fallback_message if should_handoff else result.content
+            cited_source_ids = set(result.source_ids)
+            source_titles = list(
+                dict.fromkeys(
+                    item.source_title
+                    for item in request.knowledge
+                    if item.chunk_id in cited_source_ids
+                )
+            )
             output_message = Message(
                 organization_id=input_message.organization_id,
                 conversation_id=conversation.id,
@@ -217,6 +228,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 raw_payload={
                     "ai_run_id": str(run.id),
                     "source_ids": list(result.source_ids),
+                    "source_titles": source_titles,
                 },
             )
             session.add(output_message)

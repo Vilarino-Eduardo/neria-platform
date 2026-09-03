@@ -433,6 +433,11 @@ def list_messages(
                 for column in Message.__table__.columns
             },
             "ai_run_id": row.ai_run_id,
+            "ai_source_titles": (
+                row.Message.raw_payload.get("source_titles", [])
+                if row.ai_run_id and row.Message.raw_payload
+                else []
+            ),
         }
         for row in rows
     ]
