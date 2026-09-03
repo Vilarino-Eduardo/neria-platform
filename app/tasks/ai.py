@@ -1,7 +1,8 @@
 import time
 import uuid
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.core.settings import get_settings
 from app.database.session import SessionLocal
@@ -94,6 +95,19 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             run.retrieved_chunk_ids = [item.chunk_id for item in request.knowledge]
             session.commit()
             session.refresh(run)
+        claimed_run_id = session.scalar(
+            update(AIRun)
+            .where(AIRun.id == run.id, AIRun.status == AIRunStatus.PENDING)
+            .values(
+                status=AIRunStatus.PROCESSING,
+                processing_started_at=datetime.now(UTC),
+            )
+            .returning(AIRun.id)
+        )
+        session.commit()
+        if claimed_run_id is None:
+            return
+        session.refresh(run)
         started_at = time.perf_counter()
 
         preflight = decide_ai_route(request.knowledge)
@@ -118,6 +132,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             session.flush()
             run.output_message_id = output_message.id
             run.status = AIRunStatus.COMPLETED
+            run.processing_started_at = None
             run.provider = "local"
             run.model = "structured-profile-v1"
             run.confidence = 100
@@ -148,6 +163,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             assign_conversation_if_needed(session, conversation)
             run.output_message_id = output_message.id
             run.status = AIRunStatus.ESCALATED
+            run.processing_started_at = None
             run.provider = "local"
             run.model = "knowledge-preflight-v1"
             run.confidence = 0
@@ -196,6 +212,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             assign_conversation_if_needed(session, conversation)
             run.output_message_id = output_message.id
             run.status = AIRunStatus.ESCALATED
+            run.processing_started_at = None
             run.provider = "local"
             run.model = "usage-limit-v1"
             run.confidence = 0
@@ -205,6 +222,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             session.commit()
             enqueue_outbound_message(str(output_message.id))
             return
+        run.token_reservation = token_reservation
         session.commit()
 
         try:
@@ -246,6 +264,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 assign_conversation_if_needed(session, conversation)
             run.output_message_id = output_message.id
             run.status = AIRunStatus.ESCALATED if should_handoff else AIRunStatus.COMPLETED
+            run.processing_started_at = None
             run.provider = result.provider
             run.model = result.model
             run.confidence = result.confidence
@@ -259,6 +278,7 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 output_tokens=result.output_tokens,
                 token_reservation=token_reservation,
             )
+            run.token_reservation = 0
             session.commit()
             enqueue_outbound_message(str(output_message.id))
         except Exception as exc:  # noqa: BLE001 - provider and network failures share fallback
@@ -271,7 +291,9 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                     organization_id=input_message.organization_id,
                     token_reservation=token_reservation,
                 )
+                failed_run.token_reservation = 0
                 failed_run.status = AIRunStatus.FAILED
+                failed_run.processing_started_at = None
                 failed_run.error = safe_ai_error_code(exc)
                 failed_run.latency_ms = int((time.perf_counter() - started_at) * 1000)
                 failed_conversation.mode = ConversationMode.HUMAN
@@ -290,3 +312,80 @@ def generate_ai_reply(self, input_message_id: str) -> None:
                 failed_run.output_message_id = fallback.id
                 session.commit()
                 enqueue_outbound_message(str(fallback.id))
+
+
+@celery_app.task(name="ai.recover_pending_runs")
+def recover_pending_ai_runs() -> dict[str, int]:
+    now = datetime.now(UTC)
+    stale_before = now - timedelta(minutes=5)
+    outbound_ids: list[uuid.UUID] = []
+    with SessionLocal() as session:
+        stale_runs = list(
+            session.scalars(
+                select(AIRun)
+                .where(
+                    AIRun.status == AIRunStatus.PROCESSING,
+                    AIRun.processing_started_at < stale_before,
+                )
+                .with_for_update(skip_locked=True)
+                .limit(100)
+            )
+        )
+        for run in stale_runs:
+            conversation = session.get(Conversation, run.conversation_id)
+            configuration = session.scalar(
+                select(AIConfiguration).where(
+                    AIConfiguration.organization_id == run.organization_id
+                )
+            )
+            run.status = AIRunStatus.FAILED
+            run.error = "worker_interrupted"
+            run.processing_started_at = None
+            if run.token_reservation:
+                release_ai_token_reservation(
+                    session,
+                    organization_id=run.organization_id,
+                    token_reservation=run.token_reservation,
+                )
+                run.token_reservation = 0
+            if conversation is None or configuration is None or run.output_message_id:
+                continue
+            conversation.mode = ConversationMode.HUMAN
+            assign_conversation_if_needed(session, conversation)
+            fallback = Message(
+                organization_id=run.organization_id,
+                conversation_id=run.conversation_id,
+                direction=MessageDirection.OUTBOUND,
+                message_type=MessageType.TEXT,
+                status=MessageStatus.QUEUED,
+                body=configuration.fallback_message,
+                raw_payload={
+                    "ai_run_id": str(run.id),
+                    "fallback": True,
+                    "reason": "worker_interrupted",
+                },
+            )
+            session.add(fallback)
+            session.flush()
+            run.output_message_id = fallback.id
+            outbound_ids.append(fallback.id)
+        pending_input_ids = list(
+            session.scalars(
+                select(AIRun.input_message_id)
+                .where(AIRun.status == AIRunStatus.PENDING)
+                .order_by(AIRun.created_at)
+                .limit(100)
+            )
+        )
+        session.commit()
+
+    dispatched = 0
+    for input_message_id in pending_input_ids:
+        try:
+            generate_ai_reply.delay(str(input_message_id))
+        except Exception:  # noqa: BLE001 - next recovery cycle retries dispatch
+            break
+        dispatched += 1
+    for output_message_id in outbound_ids:
+        enqueue_outbound_message(str(output_message_id))
+    return {"dispatched": dispatched, "recovered": len(outbound_ids)}

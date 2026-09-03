@@ -267,6 +267,8 @@ def test_ai_safety_matrix_without_external_calls(
             output = session.get(Message, run.output_message_id)
             conversation = session.get(Conversation, conversation_id)
             assert run.status == expected_status
+            assert run.processing_started_at is None
+            assert run.token_reservation == 0
             assert output.body == expected_body
             if name == "no_knowledge_preflight":
                 assert run.input_tokens == 0

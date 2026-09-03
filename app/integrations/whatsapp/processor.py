@@ -4,7 +4,11 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.settings import get_settings
 from app.models.core import (
+    AIConfiguration,
+    AIRun,
+    AIRunStatus,
     Contact,
     Conversation,
     ConversationMode,
@@ -17,6 +21,7 @@ from app.models.core import (
     WhatsAppAccount,
     WhatsAppWebhookEvent,
 )
+from app.services.ai.context import PROMPT_VERSION
 from app.services.automation_engine import process_automation
 from app.tasks.ai import generate_ai_reply
 from app.tasks.whatsapp import enqueue_outbound_message
@@ -163,7 +168,28 @@ def process_incoming_message(
         conversation.mode = ConversationMode.HUMAN
         return [], None
     outcome = process_automation(session, conversation, message.body)
-    return outcome.message_ids, None if outcome.handled else message.id
+    if outcome.handled:
+        return outcome.message_ids, None
+    configuration = session.scalar(
+        select(AIConfiguration).where(
+            AIConfiguration.organization_id == account.organization_id
+        )
+    )
+    settings = get_settings()
+    if configuration is None or not configuration.is_enabled or not settings.openai_api_key:
+        return outcome.message_ids, None
+    session.add(
+        AIRun(
+            organization_id=account.organization_id,
+            conversation_id=conversation.id,
+            input_message_id=message.id,
+            status=AIRunStatus.PENDING,
+            provider="openai",
+            model=settings.openai_model,
+            prompt_version=PROMPT_VERSION,
+        )
+    )
+    return outcome.message_ids, message.id
 
 
 def update_message_status(session: Session, payload: dict) -> None:

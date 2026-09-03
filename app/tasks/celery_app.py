@@ -28,6 +28,10 @@ celery_app.conf.update(
         "recover-pending-whatsapp-messages": {
             "task": "whatsapp.recover_pending_messages",
             "schedule": 30.0,
-        }
+        },
+        "recover-pending-ai-runs": {
+            "task": "ai.recover_pending_runs",
+            "schedule": 30.0,
+        },
     },
 )

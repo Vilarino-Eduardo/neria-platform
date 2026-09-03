@@ -71,6 +71,7 @@ class AIPromptVersionMetrics(BaseModel):
     prompt_version: str
     total_runs: int
     completed_runs: int
+    processing_runs: int
     escalated_runs: int
     failed_runs: int
     average_confidence: int | None
@@ -82,6 +83,7 @@ class AIMetricsResponse(BaseModel):
     period_days: int
     total_runs: int
     completed_runs: int
+    processing_runs: int
     escalated_runs: int
     failed_runs: int
     average_confidence: int | None

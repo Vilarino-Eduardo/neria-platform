@@ -19,6 +19,9 @@ PostgreSQL e Redis devem estar saudáveis antes de iniciar os processos. A API e
 - Cada worker reserva apenas uma tarefa por vez.
 - Envio ao WhatsApp possui até quatro repetições com espera progressiva.
 - Execuções pendentes da IA podem ser retomadas sem criar uma segunda resposta.
+- O agendador reenvia execuções ainda pendentes. Uma execução em processamento por mais de cinco
+  minutos é encerrada com `worker_interrupted`, libera a reserva de tokens e transfere a conversa
+  para atendimento humano, sem repetir a chamada ao provedor.
 - Falhas da IA registram apenas códigos seguros (`provider_timeout`,
   `provider_unavailable`, `provider_rate_limited`, `provider_quota_exhausted`,
   `provider_authentication_failed`, `provider_request_rejected`, `provider_http_error` ou
