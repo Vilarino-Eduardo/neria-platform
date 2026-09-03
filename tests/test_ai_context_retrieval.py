@@ -15,10 +15,29 @@ from app.models.core import (
     Organization,
     WhatsAppAccount,
 )
-from app.services.ai.context import build_ai_request
+from app.services.ai.context import (
+    MAX_HISTORY_CONTEXT_CHARS,
+    MAX_HISTORY_MESSAGE_CHARS,
+    bound_history_context,
+    build_ai_request,
+)
+from app.services.ai.contracts import AIMessage
 from app.services.ai.retrieval import LexicalKnowledgeRetriever
 
 client = TestClient(app)
+
+
+def test_history_context_keeps_newest_messages_within_character_budget() -> None:
+    messages = [
+        AIMessage(role="user", content=character * 5_000)
+        for character in ("a", "b", "c", "d")
+    ]
+
+    bounded = bound_history_context(messages)
+
+    assert [message.content[0] for message in bounded] == ["b", "c", "d"]
+    assert all(len(message.content) <= MAX_HISTORY_MESSAGE_CHARS for message in bounded)
+    assert sum(len(message.content) for message in bounded) == MAX_HISTORY_CONTEXT_CHARS
 
 
 def register_organization(prefix: str) -> tuple[uuid.UUID, dict[str, str]]:
