@@ -36,3 +36,6 @@ def test_web_application_is_served() -> None:
     assert 'id="ai-version-metrics"' in response.text
     assert "renderAIPromptVersions" in javascript.text
     assert "ai_source_titles" in javascript.text
+    assert 'id="ai-runs-list"' in response.text
+    assert "renderAIRuns" in javascript.text
+    assert "provider_quota_exhausted" in javascript.text
