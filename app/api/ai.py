@@ -1,7 +1,8 @@
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, select
 
 from app.api.dependencies import CurrentUser, DatabaseSession
@@ -27,6 +28,7 @@ from app.schemas.ai import (
     AIFeedbackCreate,
     AIFeedbackResponse,
     AIMetricsResponse,
+    AIRunSummaryResponse,
     AISimulationRequest,
     AISimulationResponse,
     AISimulationSource,
@@ -339,6 +341,39 @@ def get_ai_metrics(
         daily_usage=usage_history,
         prompt_versions=prompt_versions,
     )
+
+
+@router.get("/runs", response_model=list[AIRunSummaryResponse])
+def list_ai_runs(
+    session: DatabaseSession,
+    current_user: CurrentUser,
+    run_status: Annotated[AIRunStatus | None, Query(alias="status")] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 25,
+) -> list[dict]:
+    require_admin(current_user)
+    statement = select(AIRun).where(
+        AIRun.organization_id == current_user.organization_id
+    )
+    if run_status is not None:
+        statement = statement.where(AIRun.status == run_status)
+    runs = session.scalars(statement.order_by(AIRun.created_at.desc()).limit(limit))
+    return [
+        {
+            "id": run.id,
+            "status": run.status,
+            "provider": run.provider,
+            "model": run.model,
+            "prompt_version": run.prompt_version,
+            "source_count": len(run.retrieved_chunk_ids),
+            "confidence": run.confidence,
+            "latency_ms": run.latency_ms,
+            "input_tokens": run.input_tokens,
+            "output_tokens": run.output_tokens,
+            "error": run.error,
+            "created_at": run.created_at,
+        }
+        for run in runs
+    ]
 
 
 @router.post("/runs/{run_id}/feedback", response_model=AIFeedbackResponse)

@@ -198,6 +198,18 @@ def test_ai_configuration_feedback_and_approved_learning() -> None:
         assert version_metrics["v1"]["completed_runs"] == 1
         assert version_metrics["v1"]["correction_feedback"] == 1
 
+        recent_runs = client.get("/api/v1/ai/runs", headers=headers)
+        assert recent_runs.status_code == 200
+        assert len(recent_runs.json()) == 2
+        current_run = next(
+            item
+            for item in recent_runs.json()
+            if item["prompt_version"] == PROMPT_VERSION
+        )
+        assert current_run["model"] == "gpt-test"
+        assert current_run["source_count"] == 1
+        assert "input_message_id" not in current_run
+
         suggestions = client.get("/api/v1/ai/knowledge-suggestions", headers=headers)
         assert suggestions.status_code == 200
         assert suggestions.json()[0]["status"] == "pending"

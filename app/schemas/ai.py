@@ -3,7 +3,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models.core import AIFeedbackRating, KnowledgeSuggestionStatus
+from app.models.core import AIFeedbackRating, AIRunStatus, KnowledgeSuggestionStatus
 
 
 class AIConfigurationUpdate(BaseModel):
@@ -114,6 +114,21 @@ class AIFeedbackCreate(BaseModel):
         if self.rating == AIFeedbackRating.UNHELPFUL and not self.correction:
             raise ValueError("Informe a resposta correta para ensinar a Neria.")
         return self
+
+
+class AIRunSummaryResponse(BaseModel):
+    id: uuid.UUID
+    status: AIRunStatus
+    provider: str | None
+    model: str | None
+    prompt_version: str
+    source_count: int
+    confidence: int | None
+    latency_ms: int | None
+    input_tokens: int | None
+    output_tokens: int | None
+    error: str | None
+    created_at: datetime
 
 
 class AIFeedbackResponse(BaseModel):

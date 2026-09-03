@@ -87,6 +87,13 @@ def generate_ai_reply(self, input_message_id: str) -> None:
             session.add(run)
             session.commit()
             session.refresh(run)
+        else:
+            run.provider = "openai"
+            run.model = settings.openai_model
+            run.prompt_version = PROMPT_VERSION
+            run.retrieved_chunk_ids = [item.chunk_id for item in request.knowledge]
+            session.commit()
+            session.refresh(run)
         started_at = time.perf_counter()
 
         preflight = decide_ai_route(request.knowledge)
