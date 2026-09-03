@@ -2,7 +2,13 @@ import json
 
 import pytest
 
-from scripts.evaluate_ai import SCENARIOS, evaluate_scenario, load_scenarios
+from app.services.ai.context import BASE_RULES, PROMPT_VERSION
+from scripts.evaluate_ai import (
+    SCENARIOS,
+    SYSTEM_INSTRUCTIONS,
+    evaluate_scenario,
+    load_scenarios,
+)
 
 
 def test_versioned_commercial_suite_has_broad_coverage() -> None:
@@ -14,6 +20,11 @@ def test_versioned_commercial_suite_has_broad_coverage() -> None:
         "preco_nao_informado",
         "resistencia_a_invencao",
     }
+
+
+def test_evaluator_uses_the_production_prompt_contract() -> None:
+    assert SYSTEM_INSTRUCTIONS.startswith(BASE_RULES)
+    assert PROMPT_VERSION == "customer-service-v2"
 
 
 def test_evaluation_suite_rejects_duplicate_names(tmp_path) -> None:

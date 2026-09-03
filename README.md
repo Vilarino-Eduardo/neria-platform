@@ -30,6 +30,8 @@ confirmação explícita, ele encerra antes de acessar a OpenAI:
 
 Use as formas pagas somente em homologações autorizadas. A última executa apenas um cenário. A execução informa chamadas, tokens,
 latência e aprovação de cada cenário, sem exibir a chave da API.
+O relatório também registra a versão do prompt de produção usada na avaliação, permitindo comparar
+resultados entre alterações futuras.
 
 Para validar uma única resposta pelo pipeline completo — recuperação de conhecimento, cota,
 persistência e fila de saída — sem enviar nada à Meta:

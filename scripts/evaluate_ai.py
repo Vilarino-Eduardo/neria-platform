@@ -9,14 +9,15 @@ from pathlib import Path
 from openai import APIConnectionError, AuthenticationError, RateLimitError
 
 from app.core.settings import get_settings
+from app.services.ai.context import BASE_RULES, PROMPT_VERSION
 from app.services.ai.contracts import AIMessage, AIRequest, RetrievedKnowledge
 from app.services.ai.openai_provider import OpenAIResponsesProvider
 
-SYSTEM_INSTRUCTIONS = """Você é a assistente de atendimento da Loja Piloto.
-Responda apenas com informações fornecidas na base de conhecimento.
-Não invente preços, prazos, políticas ou disponibilidade.
-Quando não houver informação suficiente, marque transferência para atendimento humano.
-Seja objetiva, cordial e responda em português do Brasil."""
+SYSTEM_INSTRUCTIONS = (
+    f"{BASE_RULES}\nEmpresa: Loja Piloto.\n"
+    "Descrição: comércio e prestação de serviços para avaliação controlada.\n"
+    "Horário: não informado.\nTom de voz: cordial."
+)
 MAX_OUTPUT_TOKENS_PER_SCENARIO = 300
 DEFAULT_SUITE_PATH = Path(__file__).resolve().parents[1] / "evaluations" / "commercial_v1.json"
 
@@ -184,6 +185,7 @@ def main() -> int:
 
     summary = {
         "model": settings.openai_model,
+        "prompt_version": PROMPT_VERSION,
         "paid_calls": len(results),
         "maximum_output_tokens_per_call": MAX_OUTPUT_TOKENS_PER_SCENARIO,
         "maximum_output_tokens_for_run": (
