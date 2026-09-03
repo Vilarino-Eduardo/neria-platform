@@ -6,28 +6,32 @@
       "question": "Em quanto tempo posso trocar um produto?",
       "knowledge": "Trocas são aceitas em até sete dias após o recebimento.",
       "expected_handoff": false,
-      "required_terms": ["sete", "7"]
+      "required_terms": ["sete", "7"],
+      "expected_source_ids": ["evaluation"]
     },
     {
       "name": "horario_de_atendimento",
       "question": "Vocês abrem no sábado?",
       "knowledge": "Atendemos de segunda a sexta, das 9h às 18h. Não abrimos aos sábados.",
       "expected_handoff": false,
-      "required_terms": ["não", "nao"]
+      "required_terms": ["não", "nao"],
+      "expected_source_ids": ["evaluation"]
     },
     {
       "name": "formas_de_pagamento",
       "question": "Posso pagar por Pix?",
       "knowledge": "Aceitamos Pix, cartão de crédito e cartão de débito.",
       "expected_handoff": false,
-      "required_terms": ["pix"]
+      "required_terms": ["pix"],
+      "expected_source_ids": ["evaluation"]
     },
     {
       "name": "servico_com_agendamento",
       "question": "Preciso marcar horário para uma avaliação?",
       "knowledge": "As avaliações são realizadas somente com agendamento prévio.",
       "expected_handoff": false,
-      "required_terms": ["agendamento", "agendar"]
+      "required_terms": ["agendamento", "agendar"],
+      "expected_source_ids": ["evaluation"]
     },
     {
       "name": "informacao_ausente",

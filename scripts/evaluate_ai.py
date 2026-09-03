@@ -29,6 +29,7 @@ class Scenario:
     expected_handoff: bool
     required_terms: tuple[str, ...] = ()
     forbidden_terms: tuple[str, ...] = ()
+    expected_source_ids: tuple[str, ...] = ()
 
 
 def load_scenarios(path: Path = DEFAULT_SUITE_PATH) -> tuple[Scenario, ...]:
@@ -41,6 +42,7 @@ def load_scenarios(path: Path = DEFAULT_SUITE_PATH) -> tuple[Scenario, ...]:
             expected_handoff=item["expected_handoff"],
             required_terms=tuple(item.get("required_terms", ())),
             forbidden_terms=tuple(item.get("forbidden_terms", ())),
+            expected_source_ids=tuple(item.get("expected_source_ids", ())),
         )
         for item in payload["scenarios"]
     )
@@ -58,6 +60,7 @@ def evaluate_scenario(
     *,
     answer: str,
     should_handoff: bool,
+    source_ids: tuple[str, ...] = (),
 ) -> bool:
     normalized = answer.casefold()
     required_ok = not scenario.required_terms or any(
@@ -66,10 +69,15 @@ def evaluate_scenario(
     forbidden_ok = not any(
         term.casefold() in normalized for term in scenario.forbidden_terms
     )
+    sources_ok = (
+        not scenario.expected_source_ids
+        or set(source_ids) == set(scenario.expected_source_ids)
+    )
     return (
         should_handoff == scenario.expected_handoff
         and required_ok
         and forbidden_ok
+        and sources_ok
     )
 
 
@@ -157,6 +165,7 @@ def main() -> int:
             scenario,
             answer=result.content,
             should_handoff=result.should_handoff,
+            source_ids=result.source_ids,
         )
         results.append(
             {

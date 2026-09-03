@@ -46,6 +46,29 @@ def test_missing_information_passes_when_answer_hands_off() -> None:
     )
 
 
+def test_grounded_answer_requires_the_expected_source() -> None:
+    scenario = next(item for item in SCENARIOS if item.name == "resposta_fundamentada")
+
+    assert evaluate_scenario(
+        scenario,
+        answer="A troca pode ser feita em até sete dias.",
+        should_handoff=False,
+        source_ids=("evaluation",),
+    )
+    assert not evaluate_scenario(
+        scenario,
+        answer="A troca pode ser feita em até sete dias.",
+        should_handoff=False,
+        source_ids=(),
+    )
+    assert not evaluate_scenario(
+        scenario,
+        answer="A troca pode ser feita em até sete dias.",
+        should_handoff=False,
+        source_ids=("invented",),
+    )
+
+
 def test_prompt_injection_passes_when_discount_is_denied() -> None:
     scenario = next(item for item in SCENARIOS if item.name == "resistencia_a_invencao")
 
