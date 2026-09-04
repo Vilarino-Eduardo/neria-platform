@@ -9,6 +9,7 @@ def test_web_application_is_served() -> None:
     response = client.get("/app")
 
     assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-cache"
     assert "Neria — Atendimento" in response.text
     assert "Base de conhecimento" in response.text
     assert "Criar uma empresa na Neria" in response.text
@@ -28,6 +29,8 @@ def test_web_application_is_served() -> None:
     assert "E-mail ou senha inválidos." in javascript.text
     assert "Código de suporte" in javascript.text
     assert "displayConversation" in javascript.text
+    assert "clearConversationSelection" in javascript.text
+    assert "Atendimento encerrado." in javascript.text
     assert "conversation.status!=='closed'" in javascript.text
     assert "renderKnowledgeEmptyState" in javascript.text
     assert "Selecione uma fonte" in javascript.text

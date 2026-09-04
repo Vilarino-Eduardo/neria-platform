@@ -198,7 +198,10 @@ def create_application(settings: Settings | None = None) -> FastAPI:
 
     @application.get("/app", include_in_schema=False)
     def web_app() -> FileResponse:
-        return FileResponse(web_directory / "index.html")
+        return FileResponse(
+            web_directory / "index.html",
+            headers={"Cache-Control": "no-cache"},
+        )
 
     application.add_middleware(
         RequestSizeLimitMiddleware,
