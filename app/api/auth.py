@@ -3,7 +3,7 @@ import ipaddress
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, Response, status
+from fastapi import APIRouter, HTTPException, Request, Response, status
 from sqlalchemy import select, update
 
 from app.api.dependencies import (
@@ -13,6 +13,7 @@ from app.api.dependencies import (
     DatabaseSession,
     enforce_cookie_csrf,
 )
+from app.core.crypto import encrypt_secret
 from app.core.security import create_access_token, hash_password, verify_password
 from app.core.settings import get_settings
 from app.models.core import (
@@ -37,8 +38,8 @@ from app.schemas.auth import (
 )
 from app.services.audit import record_audit
 from app.services.database import integrity_conflict
-from app.services.email_service import send_password_reset_email
 from app.services.rate_limit import clear_attempts, record_attempt, retry_after
+from app.tasks.emails import enqueue_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -251,7 +252,6 @@ def logout(request: Request, response: Response) -> None:
 def forgot_password(
     payload: ForgotPasswordRequest,
     request: Request,
-    background_tasks: BackgroundTasks,
     session: DatabaseSession,
 ) -> MessageResponse:
     settings = get_settings()
@@ -276,16 +276,16 @@ def forgot_password(
                 PasswordResetToken.user_id == user.id,
                 PasswordResetToken.used_at.is_(None),
             )
-            .values(used_at=now)
+            .values(used_at=now, delivery_token_encrypted=None)
         )
         raw_token = secrets.token_urlsafe(48)
-        session.add(
-            PasswordResetToken(
-                user_id=user.id,
-                token_hash=hashlib.sha256(raw_token.encode()).hexdigest(),
-                expires_at=now + timedelta(minutes=settings.password_reset_expire_minutes),
-            )
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token_hash=hashlib.sha256(raw_token.encode()).hexdigest(),
+            delivery_token_encrypted=encrypt_secret(raw_token),
+            expires_at=now + timedelta(minutes=settings.password_reset_expire_minutes),
         )
+        session.add(reset_token)
         record_audit(
             session,
             organization_id=user.organization_id,
@@ -296,8 +296,7 @@ def forgot_password(
             ip_address=ip,
         )
         session.commit()
-        reset_url = settings.password_reset_url.format(token=raw_token)
-        background_tasks.add_task(send_password_reset_email, user.email, reset_url)
+        enqueue_password_reset_email(str(reset_token.id))
     return MessageResponse(
         message="Se o e-mail estiver cadastrado, enviaremos as instruções de recuperação."
     )
@@ -330,7 +329,7 @@ def reset_password(
             PasswordResetToken.user_id == user.id,
             PasswordResetToken.used_at.is_(None),
         )
-        .values(used_at=now)
+        .values(used_at=now, delivery_token_encrypted=None)
     )
     record_audit(
         session,

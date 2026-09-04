@@ -110,6 +110,13 @@ class WebhookEventStatus(str, enum.Enum):
     FAILED = "failed"
 
 
+class EmailDeliveryStatus(str, enum.Enum):
+    PENDING = "pending"
+    SENDING = "sending"
+    SENT = "sent"
+    FAILED = "failed"
+
+
 class AutomationStatus(str, enum.Enum):
     DRAFT = "draft"
     ACTIVE = "active"
@@ -336,6 +343,16 @@ class PasswordResetToken(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     token_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    delivery_token_encrypted: Mapped[str | None] = mapped_column(Text)
+    delivery_status: Mapped[EmailDeliveryStatus] = mapped_column(
+        Enum(EmailDeliveryStatus, native_enum=False, length=20),
+        default=EmailDeliveryStatus.PENDING,
+        nullable=False,
+    )
+    delivery_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    delivery_error: Mapped[str | None] = mapped_column(Text)
+    delivery_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(

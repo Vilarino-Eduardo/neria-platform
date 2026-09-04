@@ -3,14 +3,15 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.auth import resolve_client_ip
 from app.application import app
+from app.core.crypto import decrypt_secret
 from app.database.session import SessionLocal
-from app.models.core import Organization
+from app.models.core import Organization, PasswordResetToken, User
 
 client = TestClient(app)
 
@@ -166,13 +167,21 @@ def test_registration_login_and_user_limit() -> None:
         assert dashboard.json()["messages_today"] == 0
         assert len(dashboard.json()["daily_volume"]) == 7
 
-        with patch("app.api.auth.send_password_reset_email") as send_reset_email:
+        with patch("app.api.auth.enqueue_password_reset_email") as enqueue_reset_email:
             recovery = client.post(
                 "/api/v1/auth/forgot-password", json={"email": admin_email}
             )
         assert recovery.status_code == 200
-        reset_url = send_reset_email.call_args.args[1]
-        reset_token = reset_url.split("reset_token=", 1)[1]
+        with SessionLocal() as session:
+            reset_record = session.scalar(
+                select(PasswordResetToken)
+                .join(User, User.id == PasswordResetToken.user_id)
+                .where(User.email == admin_email)
+                .order_by(PasswordResetToken.created_at.desc())
+            )
+            reset_token = decrypt_secret(reset_record.delivery_token_encrypted)
+            reset_record_id = str(reset_record.id)
+        enqueue_reset_email.assert_called_once_with(reset_record_id)
         new_password = "nova-senha-segura-456"
         reset = client.post(
             "/api/v1/auth/reset-password",
@@ -193,7 +202,7 @@ def test_registration_login_and_user_limit() -> None:
         assert new_login.status_code == 200
         headers = {"Authorization": f"Bearer {new_login.json()['access_token']}"}
 
-        with patch("app.api.auth.send_password_reset_email") as unknown_email:
+        with patch("app.api.auth.enqueue_password_reset_email") as unknown_email:
             unknown_recovery = client.post(
                 "/api/v1/auth/forgot-password",
                 json={"email": f"unknown-{suffix}@example.com"},

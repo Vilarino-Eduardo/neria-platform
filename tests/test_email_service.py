@@ -45,8 +45,9 @@ def test_missing_smtp_never_logs_reset_secret_or_email(caplog) -> None:
     reset_url = "http://localhost:8000/?reset_token=highly-sensitive-token"
 
     with patch("app.services.email_service.get_settings", return_value=settings):
-        send_password_reset_email("private@example.com", reset_url)
+        sent = send_password_reset_email("private@example.com", reset_url)
 
+    assert sent is False
     assert "SMTP is not configured" in caplog.text
     assert "highly-sensitive-token" not in caplog.text
     assert "private@example.com" not in caplog.text
