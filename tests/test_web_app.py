@@ -20,6 +20,8 @@ def test_web_application_is_served() -> None:
     javascript = client.get("/static/app.js")
     assert stylesheet.status_code == 200
     assert javascript.status_code == 200
+    assert ".chat-actions select{display:block" in stylesheet.text
+    assert ".chat-actions{flex:0 0 100%;overflow-x:auto" in stylesheet.text
     assert "registerOrganization" in javascript.text
     assert "neria_token" not in javascript.text
     assert "Authorization" not in javascript.text

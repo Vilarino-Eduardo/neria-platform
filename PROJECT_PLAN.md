@@ -156,6 +156,8 @@ O gate com dependências travadas foi aprovado: imagem Docker construída, depen
 O primeiro conjunto consolidado da arquitetura moderna já foi versionado. A homologação local
 funcional em desktop está registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`.
 
-Próximo passo: repetir a jornada funcional crítica em largura móvel e ampliar a validação local
-das recuperações de falha. Depois disso, a evolução do piloto passa a depender da definição de
-empresa, data e orçamento para provisionar a homologação externa.
+As jornadas funcionais críticas em desktop e largura móvel foram aprovadas localmente.
+
+Próximo passo: ampliar a validação local das recuperações de indisponibilidade. Depois disso, a
+evolução do piloto passa a depender da definição de empresa, data e orçamento para provisionar a
+homologação externa.

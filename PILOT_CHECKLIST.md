@@ -11,16 +11,15 @@ Este documento define quando a Neria estará pronta para receber as primeiras em
 - [x] Automação configurável, base de conhecimento e IA com transferência humana.
 - [x] Auditoria, retenção LGPD, exportação e anonimização.
 - [x] Health checks, logs estruturados, migrações, Docker e testes de carga locais.
-- [ ] Jornada crítica aprovada manualmente em desktop e celular.
+- [x] Jornada crítica local aprovada manualmente em desktop e celular.
 - [ ] Estados de erro e indisponibilidade aprovados nas telas críticas.
 - [ ] Ambiente de homologação provisionado com domínio HTTPS.
 - [ ] R2, PostgreSQL, Redis e rotina de backup configurados e validados.
 - [ ] Número real da Meta conectado; recebimento, envio, status e templates validados.
 
-Validação parcial registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`: a jornada funcional em
-desktop e a revisão visual responsiva foram aprovadas localmente. A jornada funcional móvel
-completa e as fronteiras externas continuam pendentes, portanto os bloqueadores acima não foram
-marcados prematuramente como concluídos.
+Validação registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`: as jornadas funcionais em desktop e
+celular foram aprovadas localmente. As recuperações de indisponibilidade e as fronteiras externas
+continuam pendentes, sem serem confundidas com a aprovação local.
 
 ## Homologações locais sem custo concluídas
 

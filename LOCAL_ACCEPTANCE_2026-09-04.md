@@ -24,10 +24,14 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 10. O painel foi corrigido para limpar a conversa selecionada depois do encerramento.
 11. A página principal passou a exigir revalidação de cache, evitando carregar uma versão antiga após publicação.
 12. A interface não apresentou erros ou avisos no console durante a validação final.
+13. A jornada funcional móvel foi repetida em 390 × 844 pixels.
+14. Recebimento, abertura, transferência humana, resposta, prioridade, atribuição e encerramento funcionaram na largura móvel.
+15. Os controles de prioridade e responsável, antes ocultos no celular, foram reposicionados em uma faixa horizontal acessível.
 
 ## Evidências técnicas
 
 - Mensagem simulada final: `wamid.local.d940e6908cf543cf94d86163b55cbf95`.
+- Mensagem usada na jornada móvel: `wamid.local.93259a569ff44d199396b1b6ebc7146d`.
 - Rede externa utilizada pelo simulador: `false`.
 - Suíte automatizada: 92 testes aprovados.
 - Ruff: aprovado.
@@ -39,7 +43,6 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 
 Esta execução não aprova a jornada real de produção. Permanecem pendentes:
 
-- repetir toda a jornada funcional em largura móvel;
 - ampliar os testes manuais de indisponibilidade e recuperação;
 - provisionar homologação pública com HTTPS, banco, Redis, R2 e backups;
 - conectar número real da Meta e validar recebimento, envio, status e templates;
