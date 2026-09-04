@@ -17,6 +17,11 @@ Este documento define quando a Neria estará pronta para receber as primeiras em
 - [ ] R2, PostgreSQL, Redis e rotina de backup configurados e validados.
 - [ ] Número real da Meta conectado; recebimento, envio, status e templates validados.
 
+Validação parcial registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`: a jornada funcional em
+desktop e a revisão visual responsiva foram aprovadas localmente. A jornada funcional móvel
+completa e as fronteiras externas continuam pendentes, portanto os bloqueadores acima não foram
+marcados prematuramente como concluídos.
+
 ## Homologações locais sem custo concluídas
 
 - [x] Webhooks e status da Meta simulados pelo endpoint real, incluindo duplicidade.
@@ -58,3 +63,7 @@ As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENC
 - Capturas das etapas críticas e IDs das mensagens da Meta.
 - Resultado dos testes automatizados e da restauração de backup.
 - Problemas encontrados, severidade, decisão e versão da correção.
+
+## Evidências disponíveis
+
+- `LOCAL_ACCEPTANCE_2026-09-04.md`: homologação funcional local, limites e pendências.

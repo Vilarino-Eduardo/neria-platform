@@ -153,4 +153,9 @@ As dependências diretas e transitivas estão travadas separadamente para produ�
 
 O gate com dependências travadas foi aprovado: imagem Docker construída, dependências internas consistentes, aplicação importada no contêiner, Ruff aprovado e 44 testes concluídos.
 
-Próxima decisão: criar o primeiro commit consolidado da arquitetura moderna. A homologação paga do modelo real permanece bloqueada até autorização explícita para custos.
+O primeiro conjunto consolidado da arquitetura moderna já foi versionado. A homologação local
+funcional em desktop está registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`.
+
+Próximo passo: repetir a jornada funcional crítica em largura móvel e ampliar a validação local
+das recuperações de falha. Depois disso, a evolução do piloto passa a depender da definição de
+empresa, data e orçamento para provisionar a homologação externa.
