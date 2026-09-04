@@ -161,6 +161,9 @@ As jornadas funcionais críticas em desktop e largura móvel foram aprovadas loc
 O ciclo de falha temporária da Meta, preservação da mensagem e reenvio sem duplicação também foi
 comprovado localmente.
 
-Próximo passo: validar a recuperação local diante da indisponibilidade dos componentes internos.
-Depois disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento
-para provisionar a homologação externa.
+A indisponibilidade temporária do Redis/fila também foi comprovada: mensagens aceitas permanecem
+pendentes e são reenfileiradas pelo recuperador periódico após o retorno do broker.
+
+Próximo passo: validar o comportamento controlado diante da indisponibilidade do banco. Depois
+disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento para
+provisionar a homologação externa.

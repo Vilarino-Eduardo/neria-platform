@@ -29,6 +29,7 @@ continuam pendentes, sem serem confundidas com a aprovação local.
 - [x] E-mail transacional capturado e conferido no Mailpit.
 - [x] Backup restaurado em banco temporário e comparado em todas as tabelas.
 - [x] Queda temporária da Meta preserva a mensagem e permite reenvio sem duplicação.
+- [x] Queda temporária do Redis preserva a mensagem pendente para recuperação periódica.
 
 As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENCIES.md`.
 
