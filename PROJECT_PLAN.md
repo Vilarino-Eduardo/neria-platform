@@ -164,6 +164,9 @@ comprovado localmente.
 A indisponibilidade temporária do Redis/fila também foi comprovada: mensagens aceitas permanecem
 pendentes e são reenfileiradas pelo recuperador periódico após o retorno do broker.
 
-Próximo passo: validar o comportamento controlado diante da indisponibilidade do banco. Depois
-disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento para
-provisionar a homologação externa.
+A queda real do PostgreSQL local foi comprovada. A API permaneceu viva, sinalizou indisponibilidade
+segura com correlação e voltou ao estado pronto após o banco ser religado.
+
+Próximo passo: validar o comportamento controlado diante da indisponibilidade do armazenamento.
+Depois disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento
+para provisionar a homologação externa.

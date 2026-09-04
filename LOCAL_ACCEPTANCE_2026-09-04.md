@@ -29,6 +29,8 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 15. Os controles de prioridade e responsável, antes ocultos no celular, foram reposicionados em uma faixa horizontal acessível.
 16. Uma indisponibilidade temporária da Meta foi simulada no cliente de produção: a mensagem permaneceu armazenada, foi exposta como falha recuperável e, após o reenvio, mudou para enviada sem duplicação.
 17. Uma indisponibilidade temporária do Redis/fila foi simulada: a API preservou a mensagem como pendente e o recuperador periódico a reenfileirou quando o broker voltou.
+18. O PostgreSQL local foi desligado de fato: liveness permaneceu em 200, readiness identificou somente o banco como indisponível e operações dependentes responderam 503 com orientação segura, `Retry-After` e código de suporte.
+19. Após religar o PostgreSQL, o contêiner voltou a saudável e readiness retornou 200 com banco e Redis operacionais.
 
 ## Evidências técnicas
 
@@ -45,7 +47,7 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 
 Esta execução não aprova a jornada real de produção. Permanecem pendentes:
 
-- ampliar os testes de indisponibilidade para banco, armazenamento e demais componentes externos;
+- ampliar os testes de indisponibilidade para armazenamento e demais componentes externos;
 - provisionar homologação pública com HTTPS, banco, Redis, R2 e backups;
 - conectar número real da Meta e validar recebimento, envio, status e templates;
 - validar o provedor de IA real com orçamento e critérios de qualidade controlados.

@@ -30,6 +30,7 @@ continuam pendentes, sem serem confundidas com a aprovação local.
 - [x] Backup restaurado em banco temporário e comparado em todas as tabelas.
 - [x] Queda temporária da Meta preserva a mensagem e permite reenvio sem duplicação.
 - [x] Queda temporária do Redis preserva a mensagem pendente para recuperação periódica.
+- [x] Queda real do PostgreSQL mantém liveness, sinaliza 503 com segurança e recupera readiness.
 
 As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENCIES.md`.
 

@@ -71,12 +71,15 @@ def test_liveness_and_readiness() -> None:
     }
 
 
-def test_transient_database_failure_returns_safe_503() -> None:
+def test_transient_database_failure_returns_safe_503_and_recovers() -> None:
     isolated_app = create_application(Settings(_env_file=None))
+    database_available = False
 
     @isolated_app.get("/test-database-failure")
-    def fail_database_query() -> None:
-        raise OperationalError("SELECT 1", {}, Exception("connection lost"))
+    def database_query() -> dict[str, str]:
+        if not database_available:
+            raise OperationalError("SELECT 1", {}, Exception("connection lost"))
+        return {"status": "recovered"}
 
     isolated_client = TestClient(isolated_app)
     response = isolated_client.get(
@@ -88,6 +91,15 @@ def test_transient_database_failure_returns_safe_503() -> None:
     assert response.headers["Retry-After"] == "5"
     assert response.headers["X-Request-ID"] == "database-failure-test"
     assert "connection lost" not in response.text
+
+    database_available = True
+    recovered = isolated_client.get(
+        "/test-database-failure", headers={"X-Request-ID": "database-recovery-test"}
+    )
+
+    assert recovered.status_code == 200
+    assert recovered.json() == {"status": "recovered"}
+    assert recovered.headers["X-Request-ID"] == "database-recovery-test"
 
 
 def test_shutdown_closes_redis_even_if_database_disposal_fails() -> None:
