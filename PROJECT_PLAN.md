@@ -158,6 +158,9 @@ funcional em desktop está registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`.
 
 As jornadas funcionais críticas em desktop e largura móvel foram aprovadas localmente.
 
-Próximo passo: ampliar a validação local das recuperações de indisponibilidade. Depois disso, a
-evolução do piloto passa a depender da definição de empresa, data e orçamento para provisionar a
-homologação externa.
+O ciclo de falha temporária da Meta, preservação da mensagem e reenvio sem duplicação também foi
+comprovado localmente.
+
+Próximo passo: validar a recuperação local diante da indisponibilidade dos componentes internos.
+Depois disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento
+para provisionar a homologação externa.

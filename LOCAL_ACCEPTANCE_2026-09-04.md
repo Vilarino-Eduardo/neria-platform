@@ -27,13 +27,14 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 13. A jornada funcional móvel foi repetida em 390 × 844 pixels.
 14. Recebimento, abertura, transferência humana, resposta, prioridade, atribuição e encerramento funcionaram na largura móvel.
 15. Os controles de prioridade e responsável, antes ocultos no celular, foram reposicionados em uma faixa horizontal acessível.
+16. Uma indisponibilidade temporária da Meta foi simulada no cliente de produção: a mensagem permaneceu armazenada, foi exposta como falha recuperável e, após o reenvio, mudou para enviada sem duplicação.
 
 ## Evidências técnicas
 
 - Mensagem simulada final: `wamid.local.d940e6908cf543cf94d86163b55cbf95`.
 - Mensagem usada na jornada móvel: `wamid.local.93259a569ff44d199396b1b6ebc7146d`.
 - Rede externa utilizada pelo simulador: `false`.
-- Suíte automatizada: 92 testes aprovados.
+- Suíte automatizada: 93 testes aprovados.
 - Ruff: aprovado.
 - Alembic: nenhuma operação de migração pendente.
 - Verificação de diferenças e busca de segredos versionados: aprovadas.
@@ -43,7 +44,7 @@ Nenhuma credencial, senha ou token foi registrado neste documento.
 
 Esta execução não aprova a jornada real de produção. Permanecem pendentes:
 
-- ampliar os testes manuais de indisponibilidade e recuperação;
+- ampliar os testes de indisponibilidade para os demais componentes externos e de infraestrutura;
 - provisionar homologação pública com HTTPS, banco, Redis, R2 e backups;
 - conectar número real da Meta e validar recebimento, envio, status e templates;
 - validar o provedor de IA real com orçamento e critérios de qualidade controlados.
