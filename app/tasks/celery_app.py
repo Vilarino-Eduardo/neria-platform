@@ -7,7 +7,7 @@ celery_app = Celery(
     "neria",
     broker=settings.redis_url,
     backend=settings.redis_url,
-    include=["app.tasks.whatsapp", "app.tasks.ai"],
+    include=["app.tasks.whatsapp", "app.tasks.ai", "app.tasks.webhooks"],
 )
 celery_app.conf.update(
     task_serializer="json",
@@ -31,6 +31,10 @@ celery_app.conf.update(
         },
         "recover-pending-ai-runs": {
             "task": "ai.recover_pending_runs",
+            "schedule": 30.0,
+        },
+        "recover-pending-webhook-events": {
+            "task": "webhooks.recover_pending_events",
             "schedule": 30.0,
         },
     },

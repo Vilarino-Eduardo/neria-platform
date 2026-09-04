@@ -14,6 +14,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -104,6 +105,7 @@ class WhatsAppTemplateStatus(str, enum.Enum):
 
 class WebhookEventStatus(str, enum.Enum):
     PENDING = "pending"
+    PROCESSING = "processing"
     PROCESSED = "processed"
     FAILED = "failed"
 
@@ -611,6 +613,14 @@ class Conversation(TimestampMixin, Base):
     __tablename__ = "conversations"
     __table_args__ = (
         Index("ix_conversations_inbox", "organization_id", "status", "last_message_at"),
+        Index(
+            "uq_conversations_active_contact_account",
+            "organization_id",
+            "whatsapp_account_id",
+            "contact_id",
+            unique=True,
+            postgresql_where=text("status <> 'CLOSED'"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -753,14 +763,19 @@ class WhatsAppWebhookEvent(Base):
     __tablename__ = "whatsapp_webhook_events"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("organizations.id", ondelete="SET NULL"), index=True
+    )
     payload_hash: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
-    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    payload: Mapped[dict | None] = mapped_column(JSONB)
     status: Mapped[WebhookEventStatus] = mapped_column(
         Enum(WebhookEventStatus, native_enum=False, length=20),
         default=WebhookEventStatus.PENDING,
         nullable=False,
     )
     error: Mapped[str | None] = mapped_column(Text)
+    processing_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    processing_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

@@ -29,7 +29,7 @@ services:
         required: false
     environment: *app_environment
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - neria_storage:/app/storage
     depends_on:
@@ -102,7 +102,7 @@ services:
       POSTGRES_USER: neria
       POSTGRES_PASSWORD: neria
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -115,7 +115,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -132,8 +132,8 @@ services:
       MINIO_ROOT_USER: neria-minio
       MINIO_ROOT_PASSWORD: neria-minio-development
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
     restart: unless-stopped
@@ -153,8 +153,8 @@ services:
       MP_MAX_MESSAGES: 500
       MP_DATABASE: /data/mailpit.db
     ports:
-      - "1025:1025"
-      - "8025:8025"
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
     volumes:
       - mailpit_data:/data
     restart: unless-stopped

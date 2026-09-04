@@ -17,6 +17,7 @@ from app.models.core import (
     WebhookEventStatus,
     WhatsAppWebhookEvent,
 )
+from app.tasks.webhooks import process_webhook_event_task
 from app.tasks.whatsapp import send_whatsapp_message
 
 client = TestClient(app)
@@ -132,16 +133,26 @@ def test_whatsapp_account_and_signed_webhook() -> None:
         signature = "sha256=" + hmac.new(
             settings.meta_app_secret.encode(), raw_body, hashlib.sha256
         ).hexdigest()
-        received = client.post(
-            "/api/v1/webhooks/whatsapp",
-            content=raw_body,
-            headers={
-                "Content-Type": "application/json",
-                "X-Hub-Signature-256": signature,
-            },
-        )
+        with patch("app.api.webhooks.enqueue_webhook_event"):
+            received = client.post(
+                "/api/v1/webhooks/whatsapp",
+                content=raw_body,
+                headers={
+                    "Content-Type": "application/json",
+                    "X-Hub-Signature-256": signature,
+                },
+            )
         assert received.status_code == 200
         assert received.json()["status"] == "accepted"
+
+        with SessionLocal() as session:
+            event_id = session.scalar(
+                select(WhatsAppWebhookEvent.id).where(
+                    WhatsAppWebhookEvent.payload_hash
+                    == hashlib.sha256(raw_body).hexdigest()
+                )
+            )
+        process_webhook_event_task.run(str(event_id))
 
         duplicate = client.post(
             "/api/v1/webhooks/whatsapp",
@@ -162,8 +173,9 @@ def test_whatsapp_account_and_signed_webhook() -> None:
             )
             stored_event.status = WebhookEventStatus.FAILED
             stored_event.error = "Falha temporária simulada"
+            stored_event.payload = payload
             session.commit()
-        with patch("app.api.webhooks.process_event_in_background") as reprocess:
+        with patch("app.api.webhooks.enqueue_webhook_event") as reprocess:
             retried = client.post(
                 "/api/v1/webhooks/whatsapp",
                 content=raw_body,
@@ -227,15 +239,24 @@ def test_whatsapp_account_and_signed_webhook() -> None:
             status_signature = "sha256=" + hmac.new(
                 settings.meta_app_secret.encode(), status_body, hashlib.sha256
             ).hexdigest()
-            response = client.post(
-                "/api/v1/webhooks/whatsapp",
-                content=status_body,
-                headers={
-                    "Content-Type": "application/json",
-                    "X-Hub-Signature-256": status_signature,
-                },
-            )
+            with patch("app.api.webhooks.enqueue_webhook_event"):
+                response = client.post(
+                    "/api/v1/webhooks/whatsapp",
+                    content=status_body,
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Hub-Signature-256": status_signature,
+                    },
+                )
             assert response.status_code == 200
+            with SessionLocal() as session:
+                status_event_id = session.scalar(
+                    select(WhatsAppWebhookEvent.id).where(
+                        WhatsAppWebhookEvent.payload_hash
+                        == hashlib.sha256(status_body).hexdigest()
+                    )
+                )
+            process_webhook_event_task.run(str(status_event_id))
 
         post_status("delivered")
         post_status("sent")

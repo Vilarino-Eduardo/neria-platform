@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import decode_access_token
 from app.database.session import get_database_session
-from app.models.core import Subscription, SubscriptionStatus, User
+from app.models.core import Organization, OrganizationStatus, Subscription, SubscriptionStatus, User
 
 DatabaseSession = Annotated[Session, Depends(get_database_session)]
 bearer_scheme = HTTPBearer(auto_error=False)
@@ -56,6 +56,12 @@ def get_authenticated_user(
     user = session.get(User, user_id)
     if user is None or not user.is_active or user.session_version != session_version:
         raise unauthorized
+    organization = session.get(Organization, user.organization_id)
+    if organization is None or organization.status != OrganizationStatus.ACTIVE:
+        raise HTTPException(
+            status_code=403,
+            detail="Organização suspensa. Entre em contato com o suporte da Neria.",
+        )
 
     return user
 

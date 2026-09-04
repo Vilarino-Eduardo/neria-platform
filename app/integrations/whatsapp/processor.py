@@ -23,6 +23,7 @@ from app.models.core import (
 )
 from app.services.ai.context import PROMPT_VERSION
 from app.services.automation_engine import process_automation
+from app.services.conversation_lock import lock_active_conversation
 from app.tasks.ai import generate_ai_reply
 from app.tasks.whatsapp import enqueue_outbound_message
 
@@ -49,7 +50,7 @@ def process_webhook_event(session: Session, event: WhatsAppWebhookEvent) -> None
     queued_message_ids = []
     ai_message_ids = []
     try:
-        for entry in event.payload.get("entry", []):
+        for entry in (event.payload or {}).get("entry", []):
             for change in entry.get("changes", []):
                 value = change.get("value", {})
                 phone_number_id = value.get("metadata", {}).get("phone_number_id")
@@ -78,6 +79,9 @@ def process_webhook_event(session: Session, event: WhatsAppWebhookEvent) -> None
 
         event.status = WebhookEventStatus.PROCESSED
         event.processed_at = datetime.now(UTC)
+        event.payload = None
+        event.processing_claimed_at = None
+        event.error = None
         session.commit()
         for message_id in queued_message_ids:
             enqueue_outbound_message(str(message_id))
@@ -88,7 +92,8 @@ def process_webhook_event(session: Session, event: WhatsAppWebhookEvent) -> None
         stored_event = session.get(WhatsAppWebhookEvent, event.id)
         if stored_event:
             stored_event.status = WebhookEventStatus.FAILED
-            stored_event.error = str(exc)[:2000]
+            stored_event.error = f"Falha no processamento: {type(exc).__name__}"
+            stored_event.processing_claimed_at = None
             session.commit()
         raise
 
@@ -124,6 +129,7 @@ def process_incoming_message(
         session.add(contact)
         session.flush()
 
+    lock_active_conversation(session, account.organization_id, account.id, contact.id)
     conversation = session.scalar(
         select(Conversation).where(
             Conversation.organization_id == account.organization_id,

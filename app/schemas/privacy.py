@@ -15,6 +15,7 @@ class RetentionPreviewResponse(BaseModel):
 
 class RetentionRunResponse(RetentionPreviewResponse):
     conversations_sanitized: int
+    conversations_remaining: int
 
 
 class ContactAnonymizationResponse(BaseModel):

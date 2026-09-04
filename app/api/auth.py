@@ -18,6 +18,7 @@ from app.core.settings import get_settings
 from app.models.core import (
     Organization,
     OrganizationProfile,
+    OrganizationStatus,
     PasswordResetToken,
     Subscription,
     User,
@@ -198,6 +199,12 @@ def login(
             )
             session.commit()
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos.")
+    organization = session.get(Organization, user.organization_id)
+    if organization is None or organization.status != OrganizationStatus.ACTIVE:
+        raise HTTPException(
+            status_code=403,
+            detail="Organização suspensa. Entre em contato com o suporte da Neria.",
+        )
 
     clear_attempts("login:account", payload.email)
     clear_attempts("login:ip", ip)

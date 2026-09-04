@@ -3,7 +3,7 @@ import uuid
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, HTTPException, Response
-from sqlalchemy import func, select
+from sqlalchemy import Text, cast, func, select, update
 
 from app.api.dependencies import CurrentUser, DatabaseSession
 from app.models.core import (
@@ -14,6 +14,8 @@ from app.models.core import (
     OrganizationProfile,
     Ticket,
     UserRole,
+    WebhookEventStatus,
+    WhatsAppWebhookEvent,
 )
 from app.schemas.privacy import (
     ContactAnonymizationResponse,
@@ -173,6 +175,15 @@ def anonymize_contact(
     tickets = list(
         session.scalars(select(Ticket).where(Ticket.conversation_id.in_(conversation_ids)))
     ) if conversation_ids else []
+    pending_webhooks = list(
+        session.scalars(
+            select(WhatsAppWebhookEvent).where(
+                WhatsAppWebhookEvent.organization_id == current_user.organization_id,
+                WhatsAppWebhookEvent.payload.is_not(None),
+                cast(WhatsAppWebhookEvent.payload, Text).contains(contact.phone_number),
+            )
+        )
+    )
     for message in messages:
         message.body = None
         message.media_id = None
@@ -184,6 +195,11 @@ def anonymize_contact(
         event.content = None
     for ticket in tickets:
         ticket.subject = None
+    for webhook_event in pending_webhooks:
+        webhook_event.payload = None
+        webhook_event.status = WebhookEventStatus.PROCESSED
+        webhook_event.processed_at = datetime.now(UTC)
+        webhook_event.error = "Payload descartado por solicitação de privacidade."
     contact.phone_number = f"anon-{contact.id.hex[:26]}"
     contact.name = "Contato anonimizado"
     contact.profile_name = None
@@ -245,6 +261,7 @@ def run_retention(
     retention_days, cutoff, query = retention_scope(
         session, current_user.organization_id
     )
+    eligible_count = session.scalar(select(func.count()).select_from(query.subquery())) or 0
     conversations = list(session.scalars(query.limit(5000)))
     conversation_ids = [item.id for item in conversations]
     if conversation_ids:
@@ -266,6 +283,20 @@ def run_retention(
             select(Ticket).where(Ticket.conversation_id.in_(conversation_ids))
         ):
             ticket.subject = None
+    session.execute(
+        update(WhatsAppWebhookEvent)
+        .where(
+            WhatsAppWebhookEvent.organization_id == current_user.organization_id,
+            WhatsAppWebhookEvent.created_at <= cutoff,
+            WhatsAppWebhookEvent.payload.is_not(None),
+        )
+        .values(
+            payload=None,
+            status=WebhookEventStatus.PROCESSED,
+            processed_at=datetime.now(UTC),
+            error="Payload descartado pela política de retenção.",
+        )
+    )
     record_audit(
         session,
         organization_id=current_user.organization_id,
@@ -279,6 +310,7 @@ def run_retention(
     return RetentionRunResponse(
         retention_days=retention_days,
         cutoff=cutoff.isoformat(),
-        conversations_eligible=len(conversations),
+        conversations_eligible=eligible_count,
         conversations_sanitized=len(conversations),
+        conversations_remaining=max(eligible_count - len(conversations), 0),
     )

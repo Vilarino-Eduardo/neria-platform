@@ -1,14 +1,13 @@
 import hashlib
 import hmac
-import uuid
 
-from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Query, Request
+from fastapi import APIRouter, Header, HTTPException, Query, Request
 from sqlalchemy import select
 
 from app.api.dependencies import DatabaseSession
 from app.core.settings import get_settings
-from app.integrations.whatsapp.processor import process_webhook_event
-from app.models.core import WebhookEventStatus, WhatsAppWebhookEvent
+from app.models.core import WebhookEventStatus, WhatsAppAccount, WhatsAppWebhookEvent
+from app.tasks.webhooks import enqueue_webhook_event
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -30,7 +29,6 @@ def verify_whatsapp_webhook(
 @router.post("/whatsapp", status_code=200)
 async def receive_whatsapp_webhook(
     request: Request,
-    background_tasks: BackgroundTasks,
     session: DatabaseSession,
     x_hub_signature_256: str | None = Header(default=None),
 ) -> dict[str, str]:
@@ -55,24 +53,35 @@ async def receive_whatsapp_webhook(
             existing.status = WebhookEventStatus.PENDING
             existing.error = None
             existing.processed_at = None
+            existing.processing_attempts = 0
             session.commit()
-            background_tasks.add_task(process_event_in_background, existing.id)
+            enqueue_webhook_event(str(existing.id))
             return {"status": "retried"}
         return {"status": "duplicate"}
 
-    event = WhatsAppWebhookEvent(payload_hash=payload_hash, payload=await request.json())
+    payload = await request.json()
+    phone_number_ids = {
+        change.get("value", {}).get("metadata", {}).get("phone_number_id")
+        for entry in payload.get("entry", [])
+        for change in entry.get("changes", [])
+    }
+    organization_id = (
+        session.scalar(
+            select(WhatsAppAccount.organization_id).where(
+                WhatsAppAccount.meta_phone_number_id.in_(phone_number_ids)
+            )
+        )
+        if phone_number_ids
+        else None
+    )
+    event = WhatsAppWebhookEvent(
+        organization_id=organization_id,
+        payload_hash=payload_hash,
+        payload=payload,
+    )
     session.add(event)
     session.commit()
     session.refresh(event)
 
-    background_tasks.add_task(process_event_in_background, event.id)
+    enqueue_webhook_event(str(event.id))
     return {"status": "accepted"}
-
-
-def process_event_in_background(event_id: uuid.UUID) -> None:
-    from app.database.session import SessionLocal
-
-    with SessionLocal() as session:
-        event = session.get(WhatsAppWebhookEvent, event_id)
-        if event:
-            process_webhook_event(session, event)

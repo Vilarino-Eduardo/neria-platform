@@ -33,7 +33,11 @@ def create_user(
     if current_user.role != UserRole.ADMIN:
         raise HTTPException(status_code=403, detail="Apenas administradores podem criar usuários.")
 
-    organization = session.get(Organization, current_user.organization_id)
+    organization = session.scalar(
+        select(Organization)
+        .where(Organization.id == current_user.organization_id)
+        .with_for_update()
+    )
     user_count = session.scalar(
         select(func.count(User.id)).where(
             User.organization_id == current_user.organization_id,
@@ -99,7 +103,11 @@ def update_user(
         )
 
     if payload.is_active is True and not user.is_active:
-        organization = session.get(Organization, current_user.organization_id)
+        organization = session.scalar(
+            select(Organization)
+            .where(Organization.id == current_user.organization_id)
+            .with_for_update()
+        )
         active_count = session.scalar(
             select(func.count(User.id)).where(
                 User.organization_id == current_user.organization_id,

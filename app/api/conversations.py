@@ -40,6 +40,7 @@ from app.schemas.conversation import (
     MessageResponse,
 )
 from app.services.conversation_assignment import assign_conversation_if_needed
+from app.services.conversation_lock import lock_active_conversation
 from app.tasks.whatsapp import enqueue_outbound_message
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
@@ -226,6 +227,12 @@ def create_conversation(
     if account is None or contact is None:
         raise HTTPException(status_code=404, detail="Conta do WhatsApp ou contato não encontrado.")
 
+    lock_active_conversation(
+        session,
+        current_user.organization_id,
+        payload.whatsapp_account_id,
+        payload.contact_id,
+    )
     existing = session.scalar(
         select(Conversation).where(
             Conversation.organization_id == current_user.organization_id,

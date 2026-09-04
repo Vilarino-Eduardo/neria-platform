@@ -5,12 +5,13 @@ import uuid
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from app.application import app
 from app.core.settings import get_settings
 from app.database.session import SessionLocal
 from app.models.core import Organization, WhatsAppWebhookEvent
+from app.tasks.webhooks import process_webhook_event_task
 
 client = TestClient(app)
 
@@ -176,7 +177,7 @@ def test_complete_pilot_acceptance_journey() -> None:
             incoming_payload(f"wamid.greeting.{suffix}", "Olá")
         )
         webhook_hashes.append(first_hash)
-        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
+        with patch("app.api.webhooks.enqueue_webhook_event"):
             received = client.post(
                 "/api/v1/webhooks/whatsapp",
                 content=first_body,
@@ -184,6 +185,14 @@ def test_complete_pilot_acceptance_journey() -> None:
             )
         assert received.status_code == 200
         assert received.json()["status"] == "accepted"
+        with SessionLocal() as session:
+            first_event_id = session.scalar(
+                select(WhatsAppWebhookEvent.id).where(
+                    WhatsAppWebhookEvent.payload_hash == first_hash
+                )
+            )
+        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
+            process_webhook_event_task.run(str(first_event_id))
 
         conversations = client.get("/api/v1/conversations/inbox", headers=headers)
         assert conversations.status_code == 200
@@ -201,13 +210,21 @@ def test_complete_pilot_acceptance_journey() -> None:
             incoming_payload(f"wamid.handoff.{suffix}", "agent")
         )
         webhook_hashes.append(handoff_hash)
-        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
+        with patch("app.api.webhooks.enqueue_webhook_event"):
             handoff = client.post(
                 "/api/v1/webhooks/whatsapp",
                 content=handoff_body,
                 headers=handoff_headers,
             )
         assert handoff.status_code == 200
+        with SessionLocal() as session:
+            handoff_event_id = session.scalar(
+                select(WhatsAppWebhookEvent.id).where(
+                    WhatsAppWebhookEvent.payload_hash == handoff_hash
+                )
+            )
+        with patch("app.integrations.whatsapp.processor.enqueue_outbound_message"):
+            process_webhook_event_task.run(str(handoff_event_id))
         conversation = client.get(
             f"/api/v1/conversations/{conversation_id}", headers=headers
         )

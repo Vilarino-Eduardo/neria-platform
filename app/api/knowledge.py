@@ -1,3 +1,4 @@
+import logging
 import uuid
 from pathlib import Path
 from typing import Annotated
@@ -21,6 +22,7 @@ from app.services.knowledge_service import (
 from app.services.object_storage import get_object_storage
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
+logger = logging.getLogger(__name__)
 
 
 def require_admin(current_user: CurrentUser) -> None:
@@ -120,10 +122,15 @@ async def upload_source(
         session.commit()
         session.refresh(source)
         return source
-    except ValueError as exc:
-        storage.delete(storage_key)
+    except Exception as exc:
         session.rollback()
-        raise HTTPException(status_code=422, detail=str(exc)) from None
+        try:
+            storage.delete(storage_key)
+        except Exception:
+            logger.exception("knowledge_upload_compensation_failed")
+        if isinstance(exc, ValueError):
+            raise HTTPException(status_code=422, detail=str(exc)) from None
+        raise
 
 
 @router.get("/sources/{source_id}/chunks", response_model=list[KnowledgeChunkResponse])
@@ -154,8 +161,14 @@ def delete_source(
     require_admin(current_user)
     source = get_source(session, current_user.organization_id, source_id)
     storage_key = source.storage_key
+    if storage_key:
+        try:
+            get_object_storage().delete(storage_key)
+        except Exception as exc:
+            raise HTTPException(
+                status_code=503,
+                detail="Não foi possível remover o arquivo armazenado.",
+            ) from exc
     session.delete(source)
     session.commit()
-    if storage_key:
-        get_object_storage().delete(storage_key)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
