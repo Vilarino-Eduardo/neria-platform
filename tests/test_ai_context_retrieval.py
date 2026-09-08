@@ -22,9 +22,18 @@ from app.services.ai.context import (
     build_ai_request,
 )
 from app.services.ai.contracts import AIMessage
-from app.services.ai.retrieval import LexicalKnowledgeRetriever
+from app.services.ai.retrieval import LexicalKnowledgeRetriever, fts_query_text
 
 client = TestClient(app)
+
+
+def test_fts_query_expands_synonyms_and_ignores_stop_words() -> None:
+    query = fts_query_text("Qual é o preço para agendar?")
+
+    assert "valor" in query
+    assert "orcamento" in query
+    assert "reserva" in query
+    assert "qual" not in query
 
 
 def test_history_context_keeps_newest_messages_within_character_budget() -> None:

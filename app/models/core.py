@@ -4,6 +4,7 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     Boolean,
+    Computed,
     Date,
     DateTime,
     Enum,
@@ -16,7 +17,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import JSONB, TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
@@ -497,6 +498,7 @@ class KnowledgeChunk(Base):
     __table_args__ = (
         UniqueConstraint("source_id", "position"),
         Index("ix_knowledge_chunks_organization_source", "organization_id", "source_id"),
+        Index("ix_knowledge_chunks_search_vector", "search_vector", postgresql_using="gin"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -508,6 +510,11 @@ class KnowledgeChunk(Base):
     )
     position: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    search_vector: Mapped[str] = mapped_column(
+        TSVECTOR,
+        Computed("to_tsvector('portuguese', content)", persisted=True),
+        nullable=False,
+    )
     chunk_metadata: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

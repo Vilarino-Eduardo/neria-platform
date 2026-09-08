@@ -3,7 +3,7 @@ import unicodedata
 import uuid
 from collections import Counter
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.core import KnowledgeChunk, KnowledgeSource, KnowledgeSourceStatus
@@ -44,6 +44,9 @@ SYNONYM_INDEX = {
     for synonym in synonyms
 }
 
+MIN_CANDIDATE_LIMIT = 100
+MAX_CANDIDATE_LIMIT = 500
+
 
 def normalize_text(value: str) -> str:
     decomposed = unicodedata.normalize("NFKD", value.casefold())
@@ -83,6 +86,15 @@ def relevance_score(query: str, content: str) -> float:
     return matched + coverage
 
 
+def fts_query_text(query: str) -> str:
+    """Build a safe OR query while preserving the MVP synonym behavior."""
+    expanded: set[str] = set()
+    for term in terms(query):
+        expanded.add(term)
+        expanded.update(SYNONYM_GROUPS.get(term, ()))
+    return " OR ".join(sorted(expanded))
+
+
 class LexicalKnowledgeRetriever:
     """MVP retriever that can later be replaced by vector or hybrid search."""
 
@@ -92,14 +104,29 @@ class LexicalKnowledgeRetriever:
     def search(
         self, organization_id: str, query: str, limit: int = 5
     ) -> list[RetrievedKnowledge]:
+        if limit <= 0:
+            return []
+
+        database_query = fts_query_text(query)
+        if not database_query:
+            return []
+
+        search_query = func.websearch_to_tsquery("portuguese", database_query)
+        database_rank = func.ts_rank_cd(KnowledgeChunk.search_vector, search_query)
+        candidate_limit = min(
+            MAX_CANDIDATE_LIMIT,
+            max(MIN_CANDIDATE_LIMIT, limit * 20),
+        )
         rows = self.session.execute(
             select(KnowledgeChunk, KnowledgeSource.title)
             .join(KnowledgeSource, KnowledgeSource.id == KnowledgeChunk.source_id)
             .where(
                 KnowledgeChunk.organization_id == uuid.UUID(organization_id),
                 KnowledgeSource.status == KnowledgeSourceStatus.READY,
+                KnowledgeChunk.search_vector.op("@@")(search_query),
             )
-            .limit(5000)
+            .order_by(database_rank.desc(), KnowledgeChunk.position.asc())
+            .limit(candidate_limit)
         )
         ranked = [
             RetrievedKnowledge(
