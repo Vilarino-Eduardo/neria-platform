@@ -1,0 +1,19 @@
+{
+  "evaluation": "paid-pipeline-smoke",
+  "executed_at": "2026-09-08T19:54:45Z",
+  "passed": true,
+  "model_requested": "gpt-5-mini",
+  "model_resolved": "gpt-5-mini-2025-08-07",
+  "prompt_version": "customer-service-v2",
+  "knowledge_chunks_retrieved": 1,
+  "confidence": 92,
+  "valid_source_citation": true,
+  "input_tokens": 346,
+  "output_tokens": 152,
+  "latency_ms": 12469,
+  "outbound_message_queued": true,
+  "external_whatsapp_send_blocked": true,
+  "daily_usage_recorded": true,
+  "temporary_data_removed": true,
+  "paid_openai_calls": 1
+}

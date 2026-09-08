@@ -44,6 +44,10 @@ persistência e fila de saída — sem enviar nada à Meta:
 A empresa e os dados usados nessa prova são temporários e removidos ao final, inclusive em caso de
 falha.
 
+A última prova controlada aprovada está registrada em
+`evaluations/pipeline_smoke_2026-09-08.json`. Resultados não devem conter chaves, conteúdo pessoal
+ou mensagens completas de clientes.
+
 O consumo real é protegido por dois limites diários por empresa: quantidade de chamadas e tokens.
 O padrão inicial é 50 chamadas e 100.000 tokens; ambos podem ser reduzidos pela administração do
 plano sem alterar o código.

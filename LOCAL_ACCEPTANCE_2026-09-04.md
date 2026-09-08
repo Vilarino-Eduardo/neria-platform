@@ -66,6 +66,10 @@ O onboarding permaneceu em 75% de propósito: a quarta etapa exige verificação
 - A indisponibilidade do armazenamento foi coberta no upload e no processamento assíncrono. O
   upload retorna erro recuperável sem criar registros incompletos; o worker preserva a fonte,
   tenta novamente até cinco vezes e a interface acompanha e explica o estado por cinco minutos.
+- Uma chamada paga pelo pipeline completo da IA foi aprovada com `gpt-5-mini-2025-08-07`: uma
+  fonte recuperada, citação válida, confiança 92%, 346 tokens de entrada, 152 de saída e 12.469 ms
+  de latência. A resposta foi enfileirada sem envio à Meta e os dados temporários foram removidos.
+  A evidência estruturada está em `evaluations/pipeline_smoke_2026-09-08.json`.
 
 Esta atualização não altera os demais limites da homologação de 04/09: serviços externos e
 operação com empresa real continuam pendentes.
