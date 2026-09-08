@@ -90,83 +90,71 @@ Nenhuma exclusão deverá ocorrer antes de confirmar que o item não contém reg
 
 ## Momento da IA
 
-A interface do serviço de IA será definida durante a arquitetura para evitar acoplamento a um fornecedor. A IA funcional será construída depois que conversas, automações e base de conhecimento estiverem estáveis. Isso evita refazer prompts, memória, permissões e recuperação de documentos.
+A interface do serviço de IA está desacoplada do fornecedor e a integração funcional foi construída
+sobre conversas, automações e base de conhecimento. O protótipo já possui recuperação de fontes,
+memória recente, limites de confiança e consumo, citações, proteção contra instruções maliciosas,
+transferência humana, métricas e feedback. Aprendizado autônomo não faz parte do MVP: o feedback
+aprovado forma a base segura para essa evolução futura sem permitir alterações não supervisionadas
+no comportamento em produção.
 
-## Estado atual — 28/08/2026
+## Estado atual — 08/09/2026
 
-As etapas 1 a 10 do roadmap técnico foram implementadas para o protótipo. O produto já possui arquitetura multiempresa, autenticação, equipe, contatos, atendimento humano, WhatsApp Cloud API, automações, base de conhecimento, IA com transferência segura, métricas, auditoria, LGPD, observabilidade, Docker e preparação para armazenamento R2.
+O núcleo do protótipo comercial está implementado: arquitetura multiempresa, autenticação, equipe,
+contatos, atendimento humano, WhatsApp Cloud API, automações, base de conhecimento, IA com
+transferência segura, métricas, auditoria, LGPD, Docker e contratos de armazenamento externo.
+Essa cobertura funcional não equivale a um produto pronto para venda: as integrações externas e a
+operação com empresas reais ainda não foram homologadas.
 
-A suíte automatizada, as migrações e a imagem Docker estão operacionais. A linha de base de desempenho local está documentada em `PERFORMANCE.md`. O provisionamento real de Railway, R2, domínio e backups foi adiado deliberadamente até a proximidade do piloto, evitando custo e configuração prematuros.
+O gate técnico local atual possui 101 testes aprovados, Ruff aprovado, dependências consistentes,
+migration `a7f3c91d2e64` aplicada e API, worker e beat executando a mesma imagem. A busca lexical da
+base de conhecimento usa índice do PostgreSQL e permanece preparada para evolução híbrida/vetorial.
 
 ## Roadmap restante até a venda
 
-### 1. Preparação do piloto — fase atual
+### 1. Fechar o candidato local ao piloto — fase atual
 
-- [x] Consolidar jornadas críticas em testes integrados de aceitação.
-- [x] Criar dados demonstrativos reproduzíveis para apresentação e homologação.
-- [x] Executar revisão funcional e responsiva das telas principais.
-- [x] Tratar mensagens de erro, estados vazios e recuperação de falhas mais importantes.
-- [x] Documentar operação, suporte e procedimento de incidentes do piloto.
+- [x] Validar jornadas críticas em desktop e largura móvel.
+- [x] Validar falhas de Meta, Redis e PostgreSQL sem perda de mensagens.
+- [x] Validar backup/restauração, SMTP local e contrato S3 no ambiente gratuito.
+- [x] Sincronizar código, migrations, API, worker e beat.
+- [x] Aprovar a suíte atual de 101 testes e a análise estática.
+- [ ] Validar indisponibilidade do armazenamento nas telas e tarefas críticas.
+- [ ] Executar e registrar a avaliação real da IA depois das mudanças de recuperação.
+- [ ] Publicar a linha de base atual no GitHub e confirmar o CI remoto.
 
-### 2. Piloto controlado
+### 2. Homologação externa
 
-- Provisionar ambiente de homologação e configurar domínio, R2 e backups.
-- Conectar um número real da Meta e validar mensagens, status e templates.
-- Operar com uma a três empresas selecionadas e acompanhar qualidade, custo e carga.
-- Corrigir problemas encontrados sem ampliar desnecessariamente o escopo.
+- [ ] Definir empresa piloto, responsáveis, data e teto financeiro.
+- [ ] Provisionar ambiente HTTPS com PostgreSQL, Redis, R2, SMTP e backups.
+- [ ] Demonstrar restauração no ambiente externo.
+- [ ] Conectar um número real da Meta e validar recebimento, envio, status e templates.
+- [ ] Validar qualidade, latência e custo da IA com limites baixos.
 
-### 3. Preparação comercial
+### 3. Piloto controlado
 
-- Congelar o escopo da primeira oferta e definir preço, limites e termos.
-- Finalizar identidade visual e textos comerciais.
-- Criar landing page, demonstração guiada e materiais de onboarding.
-- Implantar cobrança automática somente quando o processo manual estiver validado.
+- [ ] Operar com uma a três empresas selecionadas.
+- [ ] Acompanhar qualidade, transferências humanas, custo, carga e incidentes.
+- [ ] Corrigir problemas bloqueantes sem ampliar o escopo do MVP.
+- [ ] Congelar a primeira versão operacional aprovada.
 
-### 4. Lançamento profissional
+### 4. Preparação comercial
 
-- Realizar revisão final de segurança e privacidade.
-- Validar restauração de backup e plano de continuidade.
-- Definir indicadores de suporte, disponibilidade e uso da IA.
-- Publicar a versão comercial e iniciar aquisição de clientes.
+- [ ] Definir oferta, preço, limites, termos de uso e política de privacidade.
+- [ ] Finalizar identidade visual e textos comerciais.
+- [ ] Criar landing page, demonstração guiada e materiais de onboarding e suporte.
+- [ ] Manter cobrança manual no primeiro piloto; automatizá-la após validar o processo.
+
+### 5. Lançamento profissional
+
+- [ ] Realizar revisão final de segurança, privacidade e continuidade.
+- [ ] Definir indicadores e compromissos de suporte e disponibilidade.
+- [ ] Publicar a versão comercial e iniciar aquisição controlada de clientes.
 
 ## Próximo passo
 
-O simulador gratuito do WhatsApp/Meta já gera webhooks assinados de entrada, duplicidade e status pelo mesmo endpoint da produção, com bloqueio de destinos externos.
+Validar a indisponibilidade do armazenamento local e a recuperação da interface e das tarefas sem
+perda ou inconsistência de dados. Nenhum serviço pago é necessário para essa etapa.
 
-O simulador gratuito da IA está alinhado ao preflight real: considera perfil, base de conhecimento e cota para indicar resposta local, uso futuro do provedor ou transferência, sem chamada externa nem reserva de cota.
-
-O armazenamento pago também pode ser homologado sem custo: o MinIO local implementa o mesmo contrato S3 do R2 e possui uma prova automatizada de gravação, leitura íntegra e remoção.
-
-Os e-mails transacionais também podem ser homologados gratuitamente: o Mailpit captura o SMTP local e a prova automatizada confere destinatário, assunto e conteúdo sem entrega externa.
-
-O procedimento de continuidade possui agora uma prova local: cria dump completo, restaura em banco temporário isolado, compara migration e todas as contagens e remove o ambiente de restauração sem alterar a origem.
-
-As dependências externas estão classificadas em `EXTERNAL_DEPENDENCIES.md`. Meta, OpenAI, hospedagem pública, R2 e SMTP ainda exigem uma validação real; cobrança automática e infraestrutura definitiva continuam adiadas. Nenhum serviço deve ser ativado antes de empresa, data e limite financeiro do piloto estarem definidos.
-
-A auditoria técnica está registrada em `AUDIT_PILOT_2026-08-31.md`: 44 testes, Ruff, migrations, build Docker, usuário não administrativo e proteção de configuração foram aprovados. O candidato ainda não está congelado devido à árvore Git não consolidada, legado empacotado, dependências sem lock e aceitação manual pendente.
-
-O núcleo legado Flask/SQLite foi revisado e retirado depois de confirmar que menu, perfil comercial, documentos, transferência, protocolos e histórico já estão cobertos pela arquitetura atual.
-
-A árvore de entrega foi classificada: código moderno e documentação formam o produto; dados JSON/SQLite, uploads e PDFs de teste foram retirados; ambientes, backups, builds e materiais de trabalho estão ignorados. Nenhum commit foi criado sem autorização.
-
-As dependências diretas e transitivas estão travadas separadamente para produção e desenvolvimento. O Docker usa o lock de produção; a atualização controlada e a futura inclusão de hashes estão documentadas em `DEPENDENCIES.md`.
-
-O gate com dependências travadas foi aprovado: imagem Docker construída, dependências internas consistentes, aplicação importada no contêiner, Ruff aprovado e 44 testes concluídos.
-
-O primeiro conjunto consolidado da arquitetura moderna já foi versionado. A homologação local
-funcional em desktop está registrada em `LOCAL_ACCEPTANCE_2026-09-04.md`.
-
-As jornadas funcionais críticas em desktop e largura móvel foram aprovadas localmente.
-
-O ciclo de falha temporária da Meta, preservação da mensagem e reenvio sem duplicação também foi
-comprovado localmente.
-
-A indisponibilidade temporária do Redis/fila também foi comprovada: mensagens aceitas permanecem
-pendentes e são reenfileiradas pelo recuperador periódico após o retorno do broker.
-
-A queda real do PostgreSQL local foi comprovada. A API permaneceu viva, sinalizou indisponibilidade
-segura com correlação e voltou ao estado pronto após o banco ser religado.
-
-Próximo passo: validar o comportamento controlado diante da indisponibilidade do armazenamento.
-Depois disso, a evolução do piloto passa a depender da definição de empresa, data e orçamento
-para provisionar a homologação externa.
+As fronteiras que ainda exigem serviços reais permanecem registradas em
+`EXTERNAL_DEPENDENCIES.md`. Ativações externas só devem ocorrer depois da definição do piloto e de
+seu limite financeiro.

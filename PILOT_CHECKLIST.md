@@ -12,7 +12,7 @@ Este documento define quando a Neria estará pronta para receber as primeiras em
 - [x] Auditoria, retenção LGPD, exportação e anonimização.
 - [x] Health checks, logs estruturados, migrações, Docker e testes de carga locais.
 - [x] Jornada crítica local aprovada manualmente em desktop e celular.
-- [ ] Estados de erro e indisponibilidade aprovados nas telas críticas.
+- [ ] Estados de erro e indisponibilidade aprovados nas telas críticas (armazenamento pendente).
 - [ ] Ambiente de homologação provisionado com domínio HTTPS.
 - [ ] R2, PostgreSQL, Redis e rotina de backup configurados e validados.
 - [ ] Número real da Meta conectado; recebimento, envio, status e templates validados.
@@ -31,6 +31,8 @@ continuam pendentes, sem serem confundidas com a aprovação local.
 - [x] Queda temporária da Meta preserva a mensagem e permite reenvio sem duplicação.
 - [x] Queda temporária do Redis preserva a mensagem pendente para recuperação periódica.
 - [x] Queda real do PostgreSQL mantém liveness, sinaliza 503 com segurança e recupera readiness.
+- [x] Código, migrations, API, worker e beat sincronizados na imagem local atual.
+- [x] Suíte atual com 101 testes, dependências, segredos e análise estática aprovados.
 
 As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENCIES.md`.
 
@@ -69,3 +71,4 @@ As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENC
 ## Evidências disponíveis
 
 - `LOCAL_ACCEPTANCE_2026-09-04.md`: homologação funcional local, limites e pendências.
+- `PROJECT_PLAN.md`: gate técnico e roadmap atualizados em 08/09/2026.

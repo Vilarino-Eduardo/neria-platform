@@ -53,3 +53,16 @@ Esta execução não aprova a jornada real de produção. Permanecem pendentes:
 - validar o provedor de IA real com orçamento e critérios de qualidade controlados.
 
 O onboarding permaneceu em 75% de propósito: a quarta etapa exige verificação real das credenciais da Meta e não deve ser simulada como concluída.
+
+## Atualização técnica — 08/09/2026
+
+- A conexão local do PostgreSQL foi fixada em IPv4 e recebeu timeout explícito de cinco segundos.
+- O problema de permissão da pasta temporária global do Pytest foi isolado no próprio workspace.
+- A suíte atual aprovou 101 testes em 44,79 segundos e o Ruff permaneceu aprovado.
+- API, worker, beat e migrations foram reconstruídos com a mesma versão do código.
+- A migration `a7f3c91d2e64` está aplicada e reconhecida pela imagem atual.
+- A API retornou readiness com PostgreSQL e Redis operacionais, e o worker respondeu ao ping.
+- A busca de conhecimento passou a realizar pré-seleção lexical indexada no PostgreSQL.
+
+Esta atualização não altera os limites da homologação de 04/09: armazenamento indisponível,
+serviços externos e operação com empresa real continuam pendentes.
