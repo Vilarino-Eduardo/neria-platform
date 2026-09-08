@@ -488,6 +488,8 @@ class KnowledgeSource(TimestampMixin, Base):
     storage_key: Mapped[str | None] = mapped_column(String(500))
     character_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     error: Mapped[str | None] = mapped_column(Text)
+    processing_attempts: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    processing_claimed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class KnowledgeChunk(Base):

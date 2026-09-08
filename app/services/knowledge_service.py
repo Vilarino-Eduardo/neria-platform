@@ -111,6 +111,7 @@ def process_existing_source(session: Session, source: KnowledgeSource, text: str
     source.character_count = len(normalized)
     source.status = KnowledgeSourceStatus.READY
     source.error = None
+    source.processing_claimed_at = None
     session.add_all(
         KnowledgeChunk(
             organization_id=source.organization_id,
