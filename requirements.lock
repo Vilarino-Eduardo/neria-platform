@@ -55,7 +55,7 @@ click-repl==0.3.0
     # via celery
 colorama==0.4.6
     # via tqdm
-cryptography==46.0.7
+cryptography==50.0.1
     # via neria (pyproject.toml)
 distro==1.9.0
     # via openai

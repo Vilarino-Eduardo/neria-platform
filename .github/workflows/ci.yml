@@ -72,6 +72,9 @@ jobs:
       - name: Check dependency compatibility
         run: python -m pip check
 
+      - name: Audit production dependencies
+        run: python -m pip_audit -r requirements.lock
+
       - name: Run static analysis
         run: ruff check .
 
