@@ -8,7 +8,13 @@ from sqlalchemy import select
 
 from app.api.dependencies import CurrentUser, DatabaseSession
 from app.core.settings import get_settings
-from app.models.core import KnowledgeChunk, KnowledgeSource, KnowledgeSourceType, UserRole
+from app.models.core import (
+    KnowledgeChunk,
+    KnowledgeSource,
+    KnowledgeSourceStatus,
+    KnowledgeSourceType,
+    UserRole,
+)
 from app.schemas.knowledge import (
     KnowledgeChunkResponse,
     KnowledgeSourceResponse,
@@ -17,9 +23,9 @@ from app.schemas.knowledge import (
 from app.services.knowledge_service import (
     build_storage_key,
     create_processed_source,
-    extract_text,
 )
 from app.services.object_storage import get_object_storage
+from app.tasks.knowledge import enqueue_knowledge_source_processing
 
 router = APIRouter(prefix="/knowledge", tags=["knowledge"])
 logger = logging.getLogger(__name__)
@@ -83,7 +89,7 @@ def create_manual_source(
 @router.post(
     "/sources/upload",
     response_model=KnowledgeSourceResponse,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def upload_source(
     session: DatabaseSession,
@@ -98,8 +104,6 @@ async def upload_source(
         raise HTTPException(status_code=413, detail="O arquivo excede o limite de 10 MB.")
     try:
         storage_key = build_storage_key(current_user.organization_id, file.filename or "")
-        extension = Path(storage_key).suffix
-        text = extract_text(content, extension)
     except (ValueError, OSError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from None
 
@@ -109,18 +113,19 @@ async def upload_source(
     except (OSError, ValueError) as exc:
         raise HTTPException(status_code=503, detail="Falha ao armazenar o arquivo.") from exc
     try:
-        source = create_processed_source(
-            session,
+        source = KnowledgeSource(
             organization_id=current_user.organization_id,
             title=(title or Path(file.filename or "Documento").stem).strip(),
             source_type=KnowledgeSourceType.FILE,
-            text=text,
+            status=KnowledgeSourceStatus.PROCESSING,
             filename=Path(file.filename or "documento").name,
             mime_type=file.content_type,
             storage_key=storage_key,
         )
+        session.add(source)
         session.commit()
         session.refresh(source)
+        enqueue_knowledge_source_processing(str(source.id))
         return source
     except Exception as exc:
         session.rollback()

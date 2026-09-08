@@ -1,11 +1,13 @@
 import uuid
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
-from sqlalchemy import delete
+from sqlalchemy import delete, select
 
 from app.application import app
 from app.database.session import SessionLocal
-from app.models.core import Organization
+from app.models.core import KnowledgeSource, KnowledgeSourceStatus, Organization
+from app.tasks.knowledge import process_knowledge_source
 
 client = TestClient(app)
 
@@ -44,20 +46,28 @@ def test_manual_and_uploaded_knowledge_are_tenant_scoped() -> None:
         assert manual.json()["status"] == "ready"
         assert manual.json()["source_type"] == "manual"
 
-        uploaded = client.post(
-            "/api/v1/knowledge/sources/upload",
-            headers=headers,
-            data={"title": "Horários de atendimento"},
-            files={
-                "file": (
-                    "horarios.txt",
-                    "Atendemos de segunda a sexta, das nove às dezoito horas.",
-                    "text/plain",
-                )
-            },
-        )
-        assert uploaded.status_code == 201
+        with patch("app.api.knowledge.enqueue_knowledge_source_processing"):
+            uploaded = client.post(
+                "/api/v1/knowledge/sources/upload",
+                headers=headers,
+                data={"title": "Horários de atendimento"},
+                files={
+                    "file": (
+                        "horarios.txt",
+                        "Atendemos de segunda a sexta, das nove às dezoito horas.",
+                        "text/plain",
+                    )
+                },
+            )
+        assert uploaded.status_code == 202
         assert uploaded.json()["filename"] == "horarios.txt"
+        assert uploaded.json()["status"] == "processing"
+        process_knowledge_source.run(uploaded.json()["id"])
+        with SessionLocal() as session:
+            processed_upload = session.scalar(
+                select(KnowledgeSource).where(KnowledgeSource.id == uploaded.json()["id"])
+            )
+            assert processed_upload.status == KnowledgeSourceStatus.READY
 
         sources = client.get("/api/v1/knowledge/sources", headers=headers)
         assert sources.status_code == 200

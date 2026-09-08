@@ -12,6 +12,7 @@ celery_app = Celery(
         "app.tasks.ai",
         "app.tasks.webhooks",
         "app.tasks.emails",
+        "app.tasks.knowledge",
     ],
 )
 celery_app.conf.update(
@@ -45,6 +46,10 @@ celery_app.conf.update(
         "recover-pending-password-reset-emails": {
             "task": "emails.recover_pending_password_resets",
             "schedule": 30.0,
+        },
+        "recover-processing-knowledge-sources": {
+            "task": "knowledge.recover_processing_sources",
+            "schedule": 60.0,
         },
     },
 )

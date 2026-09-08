@@ -5,6 +5,7 @@ from pathlib import Path
 
 from docx import Document
 from pypdf import PdfReader
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.models.core import (
@@ -97,6 +98,29 @@ def create_processed_source(
         for position, chunk in enumerate(split_into_chunks(normalized))
     )
     return source
+
+
+def process_existing_source(session: Session, source: KnowledgeSource, text: str) -> None:
+    """Replace a source's chunks after its file has been extracted by a worker."""
+    normalized = normalize_text(text)
+    if len(normalized) < 20:
+        raise ValueError("Não foi possível extrair conteúdo suficiente.")
+    if len(normalized) > MAX_EXTRACTED_CHARACTERS:
+        raise ValueError("O conteúdo extraído excede o limite permitido.")
+    session.execute(delete(KnowledgeChunk).where(KnowledgeChunk.source_id == source.id))
+    source.character_count = len(normalized)
+    source.status = KnowledgeSourceStatus.READY
+    source.error = None
+    session.add_all(
+        KnowledgeChunk(
+            organization_id=source.organization_id,
+            source_id=source.id,
+            position=position,
+            content=chunk,
+            chunk_metadata={"characters": len(chunk)},
+        )
+        for position, chunk in enumerate(split_into_chunks(normalized))
+    )
 
 
 def build_storage_key(organization_id: uuid.UUID, filename: str) -> str:
