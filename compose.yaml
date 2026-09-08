@@ -1,6 +1,7 @@
 services:
   migrate:
     profiles: ["app"]
+    image: neria-app:local
     build: .
     command: ["alembic", "upgrade", "head"]
     env_file:
@@ -22,6 +23,7 @@ services:
 
   api:
     profiles: ["app"]
+    image: neria-app:local
     build: .
     init: true
     env_file:
@@ -51,6 +53,7 @@ services:
 
   worker:
     profiles: ["app"]
+    image: neria-app:local
     build: .
     init: true
     command:
@@ -75,6 +78,7 @@ services:
 
   beat:
     profiles: ["app"]
+    image: neria-app:local
     build: .
     init: true
     command:
