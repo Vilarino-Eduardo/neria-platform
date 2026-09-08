@@ -105,7 +105,7 @@ transferência segura, métricas, auditoria, LGPD, Docker e contratos de armazen
 Essa cobertura funcional não equivale a um produto pronto para venda: as integrações externas e a
 operação com empresas reais ainda não foram homologadas.
 
-O gate técnico local atual possui 101 testes aprovados, Ruff aprovado, dependências consistentes,
+O gate técnico local atual possui 104 testes aprovados, Ruff aprovado, dependências consistentes,
 migration `a7f3c91d2e64` aplicada e API, worker e beat executando a mesma imagem. A busca lexical da
 base de conhecimento usa índice do PostgreSQL e permanece preparada para evolução híbrida/vetorial.
 
@@ -117,8 +117,8 @@ base de conhecimento usa índice do PostgreSQL e permanece preparada para evolu�
 - [x] Validar falhas de Meta, Redis e PostgreSQL sem perda de mensagens.
 - [x] Validar backup/restauração, SMTP local e contrato S3 no ambiente gratuito.
 - [x] Sincronizar código, migrations, API, worker e beat.
-- [x] Aprovar a suíte atual de 101 testes e a análise estática.
-- [ ] Validar indisponibilidade do armazenamento nas telas e tarefas críticas.
+- [x] Aprovar a suíte atual de 104 testes e a análise estática.
+- [x] Validar indisponibilidade do armazenamento na API, interface e tarefas críticas.
 - [ ] Executar e registrar a avaliação real da IA depois das mudanças de recuperação.
 - [ ] Publicar a linha de base atual no GitHub e confirmar o CI remoto.
 
@@ -152,8 +152,8 @@ base de conhecimento usa índice do PostgreSQL e permanece preparada para evolu�
 
 ## Próximo passo
 
-Validar a indisponibilidade do armazenamento local e a recuperação da interface e das tarefas sem
-perda ou inconsistência de dados. Nenhum serviço pago é necessário para essa etapa.
+Executar e registrar uma avaliação controlada da IA real depois das mudanças de recuperação de
+conhecimento. Essa etapa usa poucas chamadas pagas e só deve começar com confirmação explícita.
 
 As fronteiras que ainda exigem serviços reais permanecem registradas em
 `EXTERNAL_DEPENDENCIES.md`. Ativações externas só devem ocorrer depois da definição do piloto e de

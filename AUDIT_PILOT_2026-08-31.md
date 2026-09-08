@@ -2,7 +2,7 @@
 
 > Registro histórico. O estado corrente e o roadmap consolidado estão em `PROJECT_PLAN.md`,
 > atualizados em 08/09/2026. Desde esta auditoria, o legado e os locks foram consolidados, a
-> aceitação local foi executada e a suíte passou a conter 101 testes aprovados.
+> aceitação local foi executada e a suíte passou a conter 104 testes aprovados.
 
 ## Resultado
 

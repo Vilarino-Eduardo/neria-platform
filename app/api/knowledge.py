@@ -110,7 +110,11 @@ async def upload_source(
     storage = get_object_storage()
     try:
         storage.put(storage_key, content, file.content_type)
-    except (OSError, ValueError) as exc:
+    except Exception as exc:
+        logger.exception(
+            "knowledge_upload_storage_unavailable",
+            extra={"organization_id": str(current_user.organization_id)},
+        )
         raise HTTPException(status_code=503, detail="Falha ao armazenar o arquivo.") from exc
     try:
         source = KnowledgeSource(

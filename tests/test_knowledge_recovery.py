@@ -13,6 +13,9 @@ from app.models.core import (
     Organization,
 )
 from app.tasks.knowledge import (
+    FINAL_STORAGE_ERROR,
+    MAX_PROCESSING_ATTEMPTS,
+    TEMPORARY_STORAGE_ERROR,
     process_knowledge_source,
     recover_processing_knowledge_sources,
 )
@@ -79,6 +82,66 @@ def test_interrupted_processing_is_recovered() -> None:
 
         assert recovered >= 1
         dispatch.assert_any_call(str(source_id))
+    finally:
+        with SessionLocal() as session:
+            session.execute(delete(Organization).where(Organization.id == organization_id))
+            session.commit()
+
+
+def test_storage_outage_is_retried_and_recovers_without_losing_source() -> None:
+    organization_id, source_id = create_processing_source()
+    unavailable = SimpleNamespace(
+        get=lambda _key: (_ for _ in ()).throw(ConnectionError("offline"))
+    )
+    available = SimpleNamespace(
+        get=lambda _key: b"Conteudo restaurado e suficiente para processar a base."
+    )
+    try:
+        with patch("app.tasks.knowledge.get_object_storage", return_value=unavailable):
+            process_knowledge_source.run(str(source_id))
+
+        with SessionLocal() as session:
+            source = session.get(KnowledgeSource, source_id)
+            assert source.status == KnowledgeSourceStatus.PROCESSING
+            assert source.processing_attempts == 1
+            assert source.processing_claimed_at is None
+            assert source.error == TEMPORARY_STORAGE_ERROR
+
+        with patch("app.tasks.knowledge.process_knowledge_source.delay") as dispatch:
+            recover_processing_knowledge_sources.run()
+        dispatch.assert_any_call(str(source_id))
+
+        with patch("app.tasks.knowledge.get_object_storage", return_value=available):
+            process_knowledge_source.run(str(source_id))
+
+        with SessionLocal() as session:
+            source = session.get(KnowledgeSource, source_id)
+            assert source.status == KnowledgeSourceStatus.READY
+            assert source.processing_attempts == 2
+            assert source.processing_claimed_at is None
+            assert source.error is None
+    finally:
+        with SessionLocal() as session:
+            session.execute(delete(Organization).where(Organization.id == organization_id))
+            session.commit()
+
+
+def test_repeated_storage_outage_becomes_actionable_failure() -> None:
+    organization_id, source_id = create_processing_source()
+    unavailable = SimpleNamespace(
+        get=lambda _key: (_ for _ in ()).throw(ConnectionError("offline"))
+    )
+    try:
+        with patch("app.tasks.knowledge.get_object_storage", return_value=unavailable):
+            for _attempt in range(MAX_PROCESSING_ATTEMPTS):
+                process_knowledge_source.run(str(source_id))
+
+        with SessionLocal() as session:
+            source = session.get(KnowledgeSource, source_id)
+            assert source.status == KnowledgeSourceStatus.FAILED
+            assert source.processing_attempts == MAX_PROCESSING_ATTEMPTS
+            assert source.processing_claimed_at is None
+            assert source.error == FINAL_STORAGE_ERROR
     finally:
         with SessionLocal() as session:
             session.execute(delete(Organization).where(Organization.id == organization_id))

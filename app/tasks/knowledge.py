@@ -13,6 +13,28 @@ from app.tasks.celery_app import celery_app
 
 logger = logging.getLogger(__name__)
 MAX_PROCESSING_ATTEMPTS = 5
+TEMPORARY_STORAGE_ERROR = (
+    "O armazenamento está temporariamente indisponível. "
+    "Uma nova tentativa será feita automaticamente."
+)
+FINAL_STORAGE_ERROR = (
+    "O armazenamento permaneceu indisponível. Exclua este item e envie o arquivo novamente."
+)
+
+
+def record_storage_failure(session, source_id: uuid.UUID) -> None:
+    session.rollback()
+    source = session.get(KnowledgeSource, source_id)
+    if source is None:
+        return
+    source.processing_claimed_at = None
+    if source.processing_attempts >= MAX_PROCESSING_ATTEMPTS:
+        source.status = KnowledgeSourceStatus.FAILED
+        source.error = FINAL_STORAGE_ERROR
+    else:
+        source.status = KnowledgeSourceStatus.PROCESSING
+        source.error = TEMPORARY_STORAGE_ERROR
+    session.commit()
 
 
 @celery_app.task(name="knowledge.process_source")
@@ -40,6 +62,15 @@ def process_knowledge_source(source_id: str) -> None:
         session.commit()
         try:
             content = get_object_storage().get(source.storage_key)
+        except Exception:
+            record_storage_failure(session, source.id)
+            logger.exception(
+                "knowledge_source_storage_unavailable",
+                extra={"source_id": source_id},
+            )
+            return
+
+        try:
             text = extract_text(content, Path(source.storage_key).suffix.lower())
             process_existing_source(session, source, text)
             session.commit()
