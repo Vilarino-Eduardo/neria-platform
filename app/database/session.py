@@ -1,19 +1,28 @@
 from collections.abc import Generator
 
 from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.settings import get_settings
+from app.core.settings import Settings, get_settings
 
 settings = get_settings()
 
-engine = create_engine(
-    settings.database_url,
-    pool_pre_ping=True,
-    pool_size=settings.database_pool_size,
-    max_overflow=settings.database_max_overflow,
-    pool_timeout=settings.database_pool_timeout_seconds,
-)
+
+def build_database_engine(configuration: Settings) -> Engine:
+    return create_engine(
+        configuration.database_url,
+        connect_args={
+            "connect_timeout": configuration.database_connect_timeout_seconds,
+        },
+        pool_pre_ping=True,
+        pool_size=configuration.database_pool_size,
+        max_overflow=configuration.database_max_overflow,
+        pool_timeout=configuration.database_pool_timeout_seconds,
+    )
+
+
+engine = build_database_engine(settings)
 
 SessionLocal = sessionmaker(
     bind=engine,

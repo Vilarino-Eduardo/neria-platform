@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -14,7 +15,8 @@ class Settings(BaseSettings):
     meta_app_secret: str = "development-meta-app-secret"
     meta_webhook_verify_token: str = "development-webhook-token"
     meta_graph_api_version: str = "v26.0"
-    database_url: str = "postgresql+psycopg://neria:neria@localhost:5432/neria"
+    database_url: str = "postgresql+psycopg://neria:neria@127.0.0.1:5432/neria"
+    database_connect_timeout_seconds: int = Field(default=5, ge=1, le=60)
     database_pool_size: int = 5
     database_max_overflow: int = 10
     database_pool_timeout_seconds: int = 30
