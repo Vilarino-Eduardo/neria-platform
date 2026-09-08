@@ -121,7 +121,7 @@ base de conhecimento usa índice do PostgreSQL e permanece preparada para evolu�
 - [x] Validar indisponibilidade do armazenamento na API, interface e tarefas críticas.
 - [x] Executar e registrar uma avaliação real pelo pipeline completo após as mudanças de recuperação.
 - [ ] Executar o catálogo comercial completo da IA próximo ao piloto.
-- [ ] Publicar a linha de base atual no GitHub e confirmar o CI remoto.
+- [x] Publicar a linha de base atual no GitHub e confirmar o CI remoto.
 
 ### 2. Homologação externa
 
@@ -153,8 +153,9 @@ base de conhecimento usa índice do PostgreSQL e permanece preparada para evolu�
 
 ## Próximo passo
 
-Publicar a linha de base atual no GitHub e confirmar o CI remoto. A suíte comercial completa da IA
-permanece reservada para a proximidade do piloto, evitando consumo antes do congelamento do código.
+Definir empresa piloto, responsáveis, data e teto financeiro antes de iniciar a homologação
+externa. A suíte comercial completa da IA permanece reservada para a proximidade do piloto,
+evitando consumo antes do congelamento do código.
 
 As fronteiras que ainda exigem serviços reais permanecem registradas em
 `EXTERNAL_DEPENDENCIES.md`. Ativações externas só devem ocorrer depois da definição do piloto e de

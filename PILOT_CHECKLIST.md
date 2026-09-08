@@ -35,6 +35,7 @@ continuam pendentes, sem serem confundidas com a aprovação local.
 - [x] Falha de armazenamento no upload não cria fonte inconsistente; falha durante o processamento
   mantém a fonte e realiza até cinco tentativas antes de orientar novo envio.
 - [x] Suíte atual com 104 testes, dependências, segredos e análise estática aprovados.
+- [x] Linha de base publicada no GitHub e CI Linux aprovado no commit `7727a1a`.
 
 As fronteiras entre simulação e validação real estão em `EXTERNAL_DEPENDENCIES.md`.
 

@@ -70,6 +70,8 @@ O onboarding permaneceu em 75% de propósito: a quarta etapa exige verificação
   fonte recuperada, citação válida, confiança 92%, 346 tokens de entrada, 152 de saída e 12.469 ms
   de latência. A resposta foi enfileirada sem envio à Meta e os dados temporários foram removidos.
   A evidência estruturada está em `evaluations/pipeline_smoke_2026-09-08.json`.
+- A linha de base foi publicada no GitHub. O CI do commit `7727a1a` aprovou instalação travada,
+  auditoria de dependências, Ruff, busca de segredos, migrations e os 104 testes no Linux.
 
 Esta atualização não altera os demais limites da homologação de 04/09: serviços externos e
 operação com empresa real continuam pendentes.
